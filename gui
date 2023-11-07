@@ -1,0 +1,54 @@
+#!/bin/bash
+
+APP_STORE_NAME="LinStore"
+# Define an array of app names and corresponding icons
+apps=("App 1" "App 2" "App 3" "App 4")
+icons=("icon1.png" "icon2.png" "icon3.png" "icon4.png")
+
+# Create a temporary directory to store images
+temp_dir=$(mktemp -d)
+
+# Copy the icons to the temporary directory
+for icon in "${icons[@]}"; do
+    cp "$icon" "$temp_dir"
+done
+
+# Create a function to display app details
+app_details_page() {
+    selected_app_name="$1"
+    if [ "$selected_app_name" == "Settings" ]; then
+        # Implement settings functionality here
+        yad --title="Settings" --text="Settings will be added here"
+    else
+        yad --title="App Details" --width="300" --height="150" --form --field="App Name" "$selected_app_name" \
+        --field="Description" "Provide a description for $selected_app_name" \
+        --button="OK:0"
+    fi
+}
+
+# Create a function to display the app store dialog with a custom layout
+show_app_store() {
+    while true; do
+        list_items=()
+        for ((i=0; i<${#apps[@]}; i++)); do
+            list_items+=("--image=$temp_dir/${icons[i]}" "${apps[i]}")
+        done
+
+        selected_app_name=$(yad --text="Welcome to LinStore\nThe app store that's simple to use." --width="300" --height="500" --columns="2" \
+            "${list_items[@]}" \
+            --list --title=$APP_STORE_NAME --column="Icons:IMG" --column="Apps" --button="App Details:1" --button="Settings:2")
+
+        if [ -n "$selected_app_name" ]; then
+            app_details_page "$selected_app_name"
+        else
+            break
+        fi
+    done
+}
+
+# Call the function to show the app store
+show_app_store
+
+# Clean up the temporary directory
+rm -r "$temp_dir"
+
