@@ -1,45 +1,86 @@
 #!/bin/bash
 
 APP_STORE_NAME="LinStore"
-# Define an array of app names and corresponding icons
-apps=("App 1" "App 2" "App 3" "App 4")
-icons=("icon1.png" "icon2.png" "icon3.png" "icon4.png")
 
-# Create a temporary directory to store images
-temp_dir=$(mktemp -d)
+# Initialize associative array for categories and apps
+declare -A categories
+declare -A category_apps
 
-# Copy the icons to the temporary directory
-for icon in "${icons[@]}"; do
-    cp "$icon" "$temp_dir"
-done
+# Function to read categories and apps from the 'categories' file and 'category' files
+read_categories() {
+    while read -r category; do
+        categories["$category"]=""
+    done < etc/categories
 
-# Create a function to display app details
-app_details_page() {
-    selected_app_name="$1"
-    if [ "$selected_app_name" == "Settings" ]; then
-        # Implement settings functionality here
-        yad --title="Settings" --text="Settings will be added here"
+    for app_dir in apps/*; do
+        app_name=$(basename "$app_dir")
+        category_file="apps/$app_name/category"
+        if [ -e "$category_file" ]; then
+            while read -r app_in_category; do
+                categories["$app_in_category"]+="$app_name "
+                category_apps["$app_in_category"]+="$app_name "
+            done < "$category_file"
+        fi
+    done
+}
+
+# Function to retrieve app description from the 'description' file
+get_app_description() {
+    app_name="$1"
+    description_file="apps/$app_name/description"
+    if [ -e "$description_file" ]; then
+        cat "$description_file"
     else
-        yad --title="App Details" --width="300" --height="150" --form --field="App Name" "$selected_app_name" \
-        --field="Description" "Provide a description for $selected_app_name" \
-        --button="OK:0"
+        echo "No description available."
     fi
 }
 
-# Create a function to display the app store dialog with a custom layout
+# Function to display app details in a separate window
+app_details_page() {
+    selected_app_name="${1//|/}"
+    app_directory="apps/$selected_app_name"
+    app_icon="$app_directory/icon-16.png"
+    description=$(get_app_description "$selected_app_name")
+
+    yad --title="App Details" --width="400" --height="500" --form \
+        --text "<big><b>${selected_app_name}</b></big>" \
+        --field ":TXT" "$description" --no-edit  \
+        --image "$app_icon" \
+        --button "Install:0" \
+        --button "Uninstall:1"
+}
+
+# Function to display the app store dialog with a custom layout
 show_app_store() {
     while true; do
         list_items=()
-        for ((i=0; i<${#apps[@]}; i++)); do
-            list_items+=("--image=$temp_dir/${icons[i]}" "${apps[i]}")
+        read_categories
+
+        for category in "${!categories[@]}"; do
+            list_items+=("$category")
         done
 
-        selected_app_name=$(yad --text="Welcome to LinStore\nThe app store that's simple to use." --width="300" --height="500" --columns="2" \
+        selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="400" --height="500" --columns="1" \
             "${list_items[@]}" \
-            --list --title=$APP_STORE_NAME --column="Icons:IMG" --column="Apps" --button="App Details:1" --button="Settings:2")
+            --list --title "$APP_STORE_NAME" --column "Category" --button "Show Apps:3" --button "Settings:4")
 
-        if [ -n "$selected_app_name" ]; then
-            app_details_page "$selected_app_name"
+        selected_category="${selected_category_raw//|/}"
+
+        if [ -n "$selected_category" ]; then
+            apps_in_category=(${category_apps["$selected_category"]})
+            list_items=()
+
+            for app in "${apps_in_category[@]}"; do
+                list_items+=("$app")
+            done
+
+            selected_app_name=$(yad --text "Apps in $selected_category" --width="400" --height="500" --columns="1" \
+                "${list_items[@]}" \
+                --list --title "$APP_STORE_NAME" --column "Apps" --button "App Details:3" --button "Back:4")
+
+            if [ -n "$selected_app_name" ]; then
+                app_details_page "$selected_app_name"
+            fi
         else
             break
         fi
@@ -48,7 +89,4 @@ show_app_store() {
 
 # Call the function to show the app store
 show_app_store
-
-# Clean up the temporary directory
-rm -r "$temp_dir"
 

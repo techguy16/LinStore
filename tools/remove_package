@@ -1,0 +1,3 @@
+echo "Removing package ${1}"
+sudo apt update > /dev/null
+sudo apt remove $1 > /dev/null

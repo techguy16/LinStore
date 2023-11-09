@@ -1,0 +1,3 @@
+echo "Installing package ${1}"
+sudo apt update > /dev/null
+sudo apt install $1 > /dev/null
