@@ -1,6 +1,8 @@
 #!/bin/bash
 
 APP_STORE_NAME="LinStore"
+APP_STORE_WIDTH=300
+APP_STORE_HEIGHT=500
 
 # Initialize associative array for categories and apps
 declare -A categories
@@ -10,17 +12,20 @@ declare -A category_apps
 read_categories() {
     while read -r category; do
         categories["$category"]=""
-    done < etc/categories
+    done <etc/categories
 
     for app_dir in apps/*; do
         app_name=$(basename "$app_dir")
         category_file="apps/$app_name/category"
-        if [ -e "$category_file" ]; then
-            while read -r app_in_category; do
-                categories["$app_in_category"]+="$app_name "
-                category_apps["$app_in_category"]+="$app_name "
-            done < "$category_file"
-        fi
+        while IFS= read -r app_in_category; do
+            if [ -n "${categories[$app_in_category]}" ]; then
+                categories["$app_in_category"]+=" $app_name" # Using '+=' to add more apps in the same category
+                category_apps["$app_in_category"]+="|$app_name"
+            else
+                categories["$app_in_category"]="$app_name"
+                category_apps["$app_in_category"]="$app_name"
+            fi
+        done <"$category_file"
     done
 }
 
@@ -42,9 +47,12 @@ app_details_page() {
     app_icon="$app_directory/icon-16.png"
     description=$(get_app_description "$selected_app_name")
 
+    # Store individual app names in a temporary file for yad to process
+    echo "$selected_app_name" >/tmp/selected_app.tmp
+
     yad --title="App Details" --width="400" --height="500" --form \
         --text "<big><b>${selected_app_name}</b></big>" \
-        --field ":TXT" "$description" --no-edit  \
+        --field ":TXT" "$description" --no-edit \
         --image "$app_icon" \
         --button "Install:0" \
         --button "Uninstall:1"
@@ -60,23 +68,25 @@ show_app_store() {
             list_items+=("$category")
         done
 
-        selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="400" --height="500" --columns="1" \
+        selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="1" \
             "${list_items[@]}" \
             --list --title "$APP_STORE_NAME" --column "Category" --button "Show Apps:3" --button "Settings:4")
 
         selected_category="${selected_category_raw//|/}"
 
         if [ -n "$selected_category" ]; then
-            apps_in_category=(${category_apps["$selected_category"]})
-            list_items=()
+            apps_in_category="${category_apps["$selected_category"]}"
 
-            for app in "${apps_in_category[@]}"; do
-                list_items+=("$app")
+            # Separating apps into individual names for display
+            formatted_apps=()
+            IFS='|' read -r -a app_list <<<"$apps_in_category"
+            for app in "${app_list[@]}"; do
+                formatted_apps+=("$app")
             done
 
-            selected_app_name=$(yad --text "Apps in $selected_category" --width="400" --height="500" --columns="1" \
-                "${list_items[@]}" \
-                --list --title "$APP_STORE_NAME" --column "Apps" --button "App Details:3" --button "Back:4")
+            # Show the list of apps separately
+            selected_app_name=$(yad --text "<big><b>$selected_category Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="1" \
+                --list --title "$APP_STORE_NAME" --column "Apps" --button "App Details:3" --button "Back:4" --separator="\n" "${formatted_apps[@]}")
 
             if [ -n "$selected_app_name" ]; then
                 app_details_page "$selected_app_name"
@@ -84,9 +94,9 @@ show_app_store() {
         else
             break
         fi
+
     done
 }
 
 # Call the function to show the app store
 show_app_store
-
