@@ -1,35 +1,32 @@
 #!/bin/bash
 
 APP_STORE_NAME="LinStore"
-APP_STORE_WIDTH=300
+APP_STORE_WIDTH=350
 APP_STORE_HEIGHT=500
 
-# Initialize associative array for categories and apps
 declare -A categories
 declare -A category_apps
 
-# Function to read categories and apps from the 'categories' file and 'category' files
 read_categories() {
     while read -r category; do
         categories["$category"]=""
-    done <etc/categories
+    done < etc/categories
 
     for app_dir in apps/*; do
         app_name=$(basename "$app_dir")
         category_file="apps/$app_name/category"
         while IFS= read -r app_in_category; do
             if [ -n "${categories[$app_in_category]}" ]; then
-                categories["$app_in_category"]+=" $app_name" # Using '+=' to add more apps in the same category
+                categories["$app_in_category"]+=" $app_name"
                 category_apps["$app_in_category"]+="|$app_name"
             else
                 categories["$app_in_category"]="$app_name"
                 category_apps["$app_in_category"]="$app_name"
             fi
-        done <"$category_file"
+        done < "$category_file"
     done
 }
 
-# Function to retrieve app description from the 'description' file
 get_app_description() {
     app_name="$1"
     description_file="apps/$app_name/description"
@@ -50,35 +47,45 @@ get_app_creator() {
     fi
 }
 
-# Function to display app details in a separate window
 app_details_page() {
     selected_app_name="${1//|/}"
     app_directory="apps/$selected_app_name"
     app_icon="$app_directory/icon-48.png"
     description=$(get_app_description "$selected_app_name")
     creator=$(get_app_creator "$selected_app_name")
-    echo "$creator"
 
-    # Store the description in a temporary file
-    echo "$description" >/tmp/description.tmp
+    echo "$creator"
+    echo "$description" > /tmp/description.tmp
 
     yad --title="App Details" --width="400" --height="500" --form \
         --text "<big><b>${selected_app_name}</b></big>" \
         --field="<b>${creator}</b>:TXT" --no-edit --image="$app_icon" \
-        --button "Install:0" --button "Uninstall:1" </tmp/description.tmp
+        --button "Install:0" --button "Uninstall:1" < /tmp/description.tmp
 
-    # Remove the temporary file
     rm /tmp/description.tmp
 }
 
-# Function to display the app store dialog with a custom layout
+show_categories() {
+    list_items=()
+    for category in "${!categories[@]}"; do
+        category_icon="images/$category.png"
+        list_items+=("$category_icon")
+        list_items+=("$category")
+    done
+
+    selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+        "${list_items[@]}" \
+        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
+
+    selected_category="${selected_category_raw//|/}"
+    echo "$selected_category"
+}
 show_app_store() {
     while true; do
         list_items=()
         read_categories
 
         for category in "${!categories[@]}"; do
-            # Adding an image row for the categories
             category_icon="images/$category.png"
             list_items+=("--$category_icon")
             list_items+=("")
@@ -87,45 +94,38 @@ show_app_store() {
 
         selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
             "${list_items[@]}" \
-            --list --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
+            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
 
         selected_category="${selected_category_raw//|/}"
-        echo "$selected_category"
 
-        # Handle settings button
-        if [ "$selected_category" == "Settings" ] || [ -z "$selected_category" ]; then
+        if [ -z "$selected_category" ] || [ "$selected_category" == "Settings" ]; then
             break
         fi
-        if [ -n "$selected_category" ]; then
-            apps_in_category="${category_apps["$selected_category"]}"
 
-            # Separating apps into individual names for display
+        while [ -n "$selected_category" ]; do
+            apps_in_category="${category_apps["$selected_category"]}"
             formatted_apps=()
+
             IFS='|' read -r -a app_list <<<"$apps_in_category"
             for app in "${app_list[@]}"; do
-                # Adding an image row for the apps
                 app_icon="apps/$app/icon-16.png"
                 formatted_apps+=("--$app_icon")
                 formatted_apps+=("")
                 formatted_apps+=("$app")
             done
 
-            # Show the list of apps separately
             selected_app_name=$(yad --text "<big><b>$selected_category Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button "App Details:3" --button "Back:4" --separator="\n" "${formatted_apps[@]}")
-            selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ')
-            selected_app=$(echo -n "$selected_app" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-            echo "$selected_app"
+                --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button "App Details:3" --button "Back:4" --separator="\n" "${formatted_apps[@]}")
+
+            selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
             if [ -n "$selected_app" ]; then
                 app_details_page "$selected_app"
             else
-                if [ "$selected_app_name" == "Back" ]; then
-                    break
-                fi
+                break
             fi
-        fi
+        done
     done
 }
 
-# Call the function to show the app store
 show_app_store
