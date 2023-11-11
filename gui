@@ -40,22 +40,35 @@ get_app_description() {
     fi
 }
 
+get_app_creator() {
+    app_name="$1"
+    creator_file="apps/$app_name/creator"
+    if [ -e "$creator_file" ]; then
+        cat "$creator_file"
+    else
+        echo "No description available."
+    fi
+}
+
 # Function to display app details in a separate window
 app_details_page() {
     selected_app_name="${1//|/}"
     app_directory="apps/$selected_app_name"
-    app_icon="$app_directory/icon-16.png"
+    app_icon="$app_directory/icon-48.png"
     description=$(get_app_description "$selected_app_name")
+    creator=$(get_app_creator "$selected_app_name")
+    echo "$creator"
 
-    # Store individual app names in a temporary file for yad to process
-    echo "$selected_app_name" >/tmp/selected_app.tmp
+    # Store the description in a temporary file
+    echo "$description" >/tmp/description.tmp
 
     yad --title="App Details" --width="400" --height="500" --form \
         --text "<big><b>${selected_app_name}</b></big>" \
-        --field ":TXT" "$description" --no-edit \
-        --image "$app_icon" \
-        --button "Install:0" \
-        --button "Uninstall:1"
+        --field="<b>${creator}</b>:TXT" --no-edit --image="$app_icon" \
+        --button "Install:0" --button "Uninstall:1" </tmp/description.tmp
+
+    # Remove the temporary file
+    rm /tmp/description.tmp
 }
 
 # Function to display the app store dialog with a custom layout
@@ -65,15 +78,24 @@ show_app_store() {
         read_categories
 
         for category in "${!categories[@]}"; do
+            # Adding an image row for the categories
+            category_icon="images/$category.png"
+            list_items+=("--$category_icon")
+            list_items+=("")
             list_items+=("$category")
         done
 
-        selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="1" \
+        selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
             "${list_items[@]}" \
-            --list --title "$APP_STORE_NAME" --column "Category" --button "Show Apps:3" --button "Settings:4")
+            --list --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
 
         selected_category="${selected_category_raw//|/}"
+        echo "$selected_category"
 
+        # Handle settings button
+        if [ "$selected_category" == "Settings" ] || [ -z "$selected_category" ]; then
+            break
+        fi
         if [ -n "$selected_category" ]; then
             apps_in_category="${category_apps["$selected_category"]}"
 
@@ -81,20 +103,27 @@ show_app_store() {
             formatted_apps=()
             IFS='|' read -r -a app_list <<<"$apps_in_category"
             for app in "${app_list[@]}"; do
+                # Adding an image row for the apps
+                app_icon="apps/$app/icon-16.png"
+                formatted_apps+=("--$app_icon")
+                formatted_apps+=("")
                 formatted_apps+=("$app")
             done
 
             # Show the list of apps separately
-            selected_app_name=$(yad --text "<big><b>$selected_category Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="1" \
-                --list --title "$APP_STORE_NAME" --column "Apps" --button "App Details:3" --button "Back:4" --separator="\n" "${formatted_apps[@]}")
-
-            if [ -n "$selected_app_name" ]; then
-                app_details_page "$selected_app_name"
+            selected_app_name=$(yad --text "<big><b>$selected_category Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+                --list --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button "App Details:3" --button "Back:4" --separator="\n" "${formatted_apps[@]}")
+            selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ')
+            selected_app=$(echo -n "$selected_app" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+            echo "$selected_app"
+            if [ -n "$selected_app" ]; then
+                app_details_page "$selected_app"
+            else
+                if [ "$selected_app_name" == "Back" ]; then
+                    break
+                fi
             fi
-        else
-            break
         fi
-
     done
 }
 
