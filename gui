@@ -80,6 +80,7 @@ show_categories() {
     selected_category="${selected_category_raw//|/}"
     echo "$selected_category"
 }
+
 show_app_store() {
     while true; do
         list_items=()
@@ -97,7 +98,7 @@ show_app_store() {
             --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
 
         selected_category="${selected_category_raw//|/}"
-
+        echo "$selected_category_raw"
         if [ -z "$selected_category" ] || [ "$selected_category" == "Settings" ]; then
             break
         fi
@@ -115,10 +116,10 @@ show_app_store() {
             done
 
             selected_app_name=$(yad --text "<big><b>$selected_category Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button "App Details:3" --button "Back:4" --separator="\n" "${formatted_apps[@]}")
-
+                --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="App Details:3" --button="Back:4" --separator="\n" "${formatted_apps[@]}")
             selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-
+            foo=$?
+            echo "$foo"
             if [ -n "$selected_app" ]; then
                 app_details_page "$selected_app"
             else
