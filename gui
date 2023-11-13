@@ -57,13 +57,17 @@ app_details_page() {
     echo "$creator"
     echo "$description" > /tmp/description.tmp
 
+    install_command="echo '$selected_app_name is installing'"
+    uninstall_command="echo '$selected_app_name is uninstalling'"
+
     yad --title="App Details" --width="400" --height="500" --form \
         --text "<big><b>${selected_app_name}</b></big>" \
         --field="<b>${creator}</b>:TXT" --no-edit --image="$app_icon" \
-        --button "Install:0" --button "Uninstall:1" < /tmp/description.tmp
+        --button="Install:$install_command" --button="Uninstall:$uninstall_command" < /tmp/description.tmp
 
     rm /tmp/description.tmp
 }
+
 
 show_categories() {
     list_items=()
@@ -81,6 +85,37 @@ show_categories() {
     echo "$selected_category"
 }
 
+show_apps_in_category() {
+    while true; do
+        apps_in_category="${category_apps["$1"]}"
+        formatted_apps=()
+
+        IFS='|' read -r -a app_list <<<"$apps_in_category"
+        for app in "${app_list[@]}"; do
+            app_icon="apps/$app/icon-16.png"
+            formatted_apps+=("--$app_icon")
+            formatted_apps+=("")
+            formatted_apps+=("$app")
+        done
+
+        selected_app_name=$(yad --text "<big><b>$1 Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}")
+
+        button_clicked=$?
+        selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+        if [ $button_clicked -eq 4 ]; then
+            break
+        fi
+
+        if [ -n "$selected_app" ]; then
+            app_details_page "$selected_app"
+        else
+            break
+        fi
+    done
+}
+
 show_app_store() {
     while true; do
         list_items=()
@@ -93,40 +128,49 @@ show_app_store() {
             list_items+=("$category")
         done
 
-        selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+        yad --text "Welcome to $APP_STORE_NAME" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
             "${list_items[@]}" \
-            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
+            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings"
 
-        selected_category="${selected_category_raw//|/}"
-        echo "$selected_category_raw"
-        if [ -z "$selected_category" ] || [ "$selected_category" == "Settings" ]; then
-            break
+        selection=$(< tmp/yad_output.txt)
+        rm tmp/yad_output.txt
+
+        if [ -z "$selection" ]; then
+            continue
         fi
 
-        while [ -n "$selected_category" ]; do
-            apps_in_category="${category_apps["$selected_category"]}"
-            formatted_apps=()
+        if [ "$selection" == "Settings" ]; then
+            echo "Settings window opened"
+            continue
+        fi
 
-            IFS='|' read -r -a app_list <<<"$apps_in_category"
-            for app in "${app_list[@]}"; do
-                app_icon="apps/$app/icon-16.png"
-                formatted_apps+=("--$app_icon")
-                formatted_apps+=("")
-                formatted_apps+=("$app")
-            done
-
-            selected_app_name=$(yad --text "<big><b>$selected_category Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="App Details:3" --button="Back:4" --separator="\n" "${formatted_apps[@]}")
-            selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-            foo=$?
-            echo "$foo"
-            if [ -n "$selected_app" ]; then
-                app_details_page "$selected_app"
-            else
-                break
-            fi
-        done
+        show_apps_in_category "$selection"
     done
 }
 
+show_app_store() {
+    while true; do
+        list_items=()
+        read_categories
+
+        for category in "${!categories[@]}"; do
+            category_icon="images/$category.png"
+            list_items+=("--$category_icon")
+            list_items+=("")
+            list_items+=("$category")
+        done
+
+        selected_category_raw=$(yad --text "Welcome to $APP_STORE_NAME" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+            "${list_items[@]}" \
+            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings")
+
+        selected_category="${selected_category_raw//|/}"
+
+        if [ -z "$selected_category" ]; then
+            continue
+        fi
+        
+        show_apps_in_category "$selected_category"
+    done
+}
 show_app_store

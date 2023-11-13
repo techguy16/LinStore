@@ -1,0 +1,14 @@
+#!/bin/bash
+
+show_settings() {
+    yad --form \
+        --title="Settings" \
+        --text="Adjust your settings" \
+        --field="Option 1":CB "Choice 1!Choice 2!Choice 3" \
+        --field="Option 2":CHK \
+        --field="Option 3":NUM \
+        --button="Save Settings:0" \
+        --button="Cancel:1" > /dev/null
+}
+
+show_settings
