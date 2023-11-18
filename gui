@@ -2,13 +2,13 @@
 
 APP_STORE_NAME="LinStore"
 APP_STORE_WIDTH=350
-APP_STORE_HEIGHT=500
+APP_STORE_HEIGHT=600
 
 declare -A categories
 declare -A category_apps
 
 detect_and_write_architecture() {
-    mkdir ~/.linstore
+    mkdir -p ~/.linstore
     case "$(uname -m)" in
     x86_64)
         echo "x64" >~/.linstore/architecture.txt
@@ -67,6 +67,7 @@ get_app_creator() {
         echo "No description available."
     fi
 }
+
 get_app_website() {
     app_name="$1"
     website_file="apps/$app_name/website"
@@ -87,12 +88,12 @@ app_details_page() {
 
     echo "$creator"
     echo "$description" >/tmp/description.tmp
-
+    touch "~/.linstore/installed"
     install_command=""
     uninstall_command=""
     architecture=$(cat ~/.linstore/architecture.txt)
     install_script="install-$architecture"
-    installed_file="~/.linstore/installed.txt"
+    installed_file="~/.linstore/installed"
 
     if [ -e "$app_directory/$install_script" ]; then
         chmod +x "$app_directory/$install_script"
@@ -108,15 +109,13 @@ app_details_page() {
         echo "Installation script not found for this architecture."
     fi
 
-    yad --title="App Details" --width="400" --height="500" --form \
+    yad --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
         --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
         --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" \
-        --button="Install:$install_command" --button="Uninstall:$uninstall_command" --close-on-extra </tmp/description.tmp
+        --button="Install:$install_command" --button="Uninstall (unfunctional)" --close-on-extra </tmp/description.tmp
 
     rm /tmp/description.tmp
 }
-
-
 
 show_categories() {
     list_items=()
@@ -128,7 +127,7 @@ show_categories() {
 
     selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
-        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4")
+        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
 
     selected_category="${selected_category_raw//|/}"
     echo "$selected_category"
@@ -136,20 +135,33 @@ show_categories() {
 
 show_apps_in_category() {
     while true; do
-        apps_in_category="${category_apps["$1"]}"
-        echo "$apps_in_category"
-        formatted_apps=()
+        if [ "$1" == "All Apps" ]; then
+            # Show all apps in the "All Apps" category
+            all_apps_list=()
+            for app_dir in apps/*; do
+                app_name=$(basename "$app_dir")
+                app_icon="apps/$app_name/icon-24.png"
+                all_apps_list+=("$app_icon")
+                all_apps_list+=("$app_name")
+            done
 
-        IFS='|' read -r -a app_list <<<"$apps_in_category"
-        for app in "${app_list[@]}"; do
-            app_icon="apps/$app/icon-24.png"
-            formatted_apps+=("$app_icon")
-            # formatted_apps+=("")
-            formatted_apps+=("$app")
-        done
+            selected_app_name=$(yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+                --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
+        else
+            apps_in_category="${category_apps["$1"]}"
+            echo "$apps_in_category"
+            formatted_apps=()
 
-        selected_app_name=$(yad --text "<big><b>$1 Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --item-height="50" --padding="5")
+            IFS='|' read -r -a app_list <<<"$apps_in_category"
+            for app in "${app_list[@]}"; do
+                app_icon="apps/$app/icon-24.png"
+                formatted_apps+=("$app_icon")
+                formatted_apps+=("$app")
+            done
+
+            selected_app_name=$(yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+                --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
+        fi
 
         button_clicked=$?
         selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
@@ -175,16 +187,17 @@ show_app_store() {
     sorted_categories=$(printf '%s\n' "${!categories[@]}" | sort)
 
     list_items=()
+    list_items=("images/categories/All Apps.png" "All Apps")
     while IFS= read -r category; do
-        category_icon="images/$category.png"
+        category_icon="images/categories/$category.png"
         list_items+=("$category_icon")
 
         list_items+=("$category")
     done <<<"$sorted_categories"
 
-    selected_category_raw=$(yad --text "Welcome to $APP_STORE_NAME" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+    selected_category_raw=$(yad --text "Welcome to $APP_STORE_NAME\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
-        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings" --html --item-height=70)
+        --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings" --no-headers)
 
     selected_category="${selected_category_raw//|/}"
 

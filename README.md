@@ -9,8 +9,6 @@ LinStore will have support for apps from Pi-Apps (I'm sorry Botspot).
 ## Architectures supported
 * AMD64
 > **We don't call it AMD64** - some anonymous person
+* i386
 * ARM64
 * ARMv7l
-
-## Why not Pi-Apps or Pi-Apps x86?
-I just thought a competitor to Pi-Apps would bring the monopoly's marketshare down and users experiencing something else (no offence)
