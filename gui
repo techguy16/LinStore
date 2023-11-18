@@ -149,7 +149,7 @@ show_apps_in_category() {
         done
 
         selected_app_name=$(yad --text "<big><b>$1 Apps</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}")
+            --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --item-height="50" --padding="5")
 
         button_clicked=$?
         selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
@@ -178,12 +178,13 @@ show_app_store() {
     while IFS= read -r category; do
         category_icon="images/$category.png"
         list_items+=("$category_icon")
+
         list_items+=("$category")
     done <<<"$sorted_categories"
 
     selected_category_raw=$(yad --text "Welcome to $APP_STORE_NAME" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
-        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings")
+        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings" --html --item-height=70)
 
     selected_category="${selected_category_raw//|/}"
 
