@@ -1,0 +1,124 @@
+#!/bin/bash
+
+APP_STORE_DIRECTORY="apps"
+CATEGORIES_FILE="etc/categories"
+
+select_category_pane() {
+    category_list=()
+    while read -r category; do
+        category_list+=("$category")
+    done < "$CATEGORIES_FILE"
+
+    selected_category=$(yad --title="Select Category" \
+        --text="Choose a category for the app:" \
+        --field="Category:" \
+        --width="400" --height="300" --center --on-top --borders=10 --columns=1 "${category_list[@]}" \
+        --list --column="Categories" )
+
+    if [ -z "$selected_category" ]; then
+        yad --error --title="Error" --text="Please select a category." --center --on-top --borders=10
+        return
+    fi
+    app_directory="$APP_STORE_DIRECTORY"
+
+    # Create or update the app files with the collected information
+    echo "${selected_category//|/}" >"$app_directory/category"
+    # Call the function to create the app with the selected category
+    create_new_app_pane
+}
+
+create_new_app_pane() {
+    app_data=$(yad --form \
+        --title="Create New App" \
+        --text="Enter the following details for the new app:" \
+        --field="App Name:" \
+        --field="Website:" \
+        --field="Creator:" \
+        --field="x64 (amd64):CHK" \
+        --field="x86 (i386/x86):CHK" \
+        --field="ARM 32-bit (armv7l):CHK" \
+        --field="ARM 64-bit (aarch64):CHK" \
+        --width="400" --center --on-top --borders=10 --separator="|")
+
+    # Extracting values from the form data
+    app_name=$(echo "$app_data" | awk -F '|' '{print $1}')
+    website=$(echo "$app_data" | awk -F '|' '{print $2}')
+    creator=$(echo "$app_data" | awk -F '|' '{print $3}')
+    install_x64=$(echo "$app_data" | awk -F '|' '{print $4}')
+    install_x86=$(echo "$app_data" | awk -F '|' '{print $5}')
+    install_32=$(echo "$app_data" | awk -F '|' '{print $6}')
+    install_64=$(echo "$app_data" | awk -F '|' '{print $7}')
+
+    # Create the app directory
+    app_directory="$APP_STORE_DIRECTORY/$app_name"
+    mkdir -p "$app_directory"
+    mv "$APP_STORE_DIRECTORY/category" "$app_directory/category"
+    # Create or update the app files with the collected information
+    echo "$website" >"$app_directory/website"
+    echo "$creator" >"$app_directory/creator"
+
+    # Open a separate dialog for description input
+    description=$(yad --form \
+        --title="Create New App - Description" \
+        --text="<b>Enter a description for the app:</b>" \
+        --field="<b>Description:</b>:TXT" \
+        --width="400" --height="200" --center --on-top --borders=10)
+
+    description=$(echo "$description" | awk -F '|' '{print $1}')
+    echo "$description" >"$app_directory/description"
+
+    # Generate and resize the icon
+    icon_file=$(yad --file-selection --title="Select Icon for App" --width="400" --center --on-top)
+    if [ -n "$icon_file" ]; then
+        cp "$icon_file" "$app_directory/icon-original.png"
+        convert "$icon_file" -resize 48x48 "$app_directory/icon-48.png"
+        convert "$icon_file" -resize 24x24 "$app_directory/icon-24.png"
+        convert "$icon_file" -resize 16x16 "$app_directory/icon-16.png"
+    fi
+
+    # Create or update the install scripts based on user preferences
+    if [ "$install_x64" == "TRUE" ] || [ "$install_x86" == "TRUE" ] || [ "$install_32" == "TRUE" ] || [ "$install_64" == "TRUE" ]; then
+        separate_scripts=$(yad --width="400" --height="200" \
+            --title="Install Scripts" \
+            --text="Do you want separate install scripts?" \
+            --button="All in one:0" \
+            --button="Separate:1" \
+            --center --on-top --borders=10)
+
+        if [ $? -eq 0 ]; then
+            gedit "$app_directory/install-all-in-one" &
+        else
+            if [ "$install_x64" == "TRUE" ]; then
+                gedit "$app_directory/install-x64" &
+            fi
+            if [ "$install_x86" == "TRUE" ]; then
+                gedit "$app_directory/install-x86" &
+            fi
+            if [ "$install_32" == "TRUE" ]; then
+                gedit "$app_directory/install-32" &
+            fi
+            if [ "$install_64" == "TRUE" ]; then
+                gedit "$app_directory/install-64" &
+            fi
+        fi
+    fi
+
+    # Create or update the uninstall script and open it in gedit
+    gedit "$app_directory/uninstall" &
+}
+
+show_createapp() {
+    selected_action=$(yad --width="400" --height="200" \
+        --title="Create App" \
+        --text="Choose an action:" \
+        --button="Create New App:1" \
+        --button="Cancel:2" \
+        --center --on-top)
+
+    case $? in
+    1) select_category_pane ;;
+    *) exit ;;
+    esac
+}
+
+show_createapp
