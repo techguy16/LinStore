@@ -86,7 +86,7 @@ create_new_app_pane() {
             --center --on-top --borders=10)
 
         if [ $? -eq 0 ]; then
-            gedit "$app_directory/install-all-in-one" &
+            gedit "$app_directory/install" &
         else
             if [ "$install_x64" == "TRUE" ]; then
                 gedit "$app_directory/install-x64" &
