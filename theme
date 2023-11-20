@@ -1,0 +1,32 @@
+APP_STORE_DIRECTORY="apps"
+CATEGORIES_FILE="etc/categories"
+THEMES_DIRECTORY="/usr/share/themes"
+THEMES_FILE="etc/theme"
+
+show_theme_selection() {
+    themes=()
+    while IFS= read -r -d '' theme; do
+        # Extract just the name of the theme from its full path
+        theme_name=$(basename "$theme")
+        themes+=("$theme_name")
+    done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0)
+
+    selected_theme=$(yad --title="Select Theme" \
+        --text="Choose a theme:" \
+        --width="400" --height="300" --center --on-top --borders=10 --list --column="Themes" "${themes[@]}")
+    selected_theme="${selected_theme//|/}"
+
+    if [ -z "$selected_theme" ]; then
+        yad --error --title="Error" --text="Please select a theme." --center --on-top --borders=10
+        return
+    fi
+
+    # Get the full path of the selected theme using 'find'
+    if [ -n "$selected_theme" ]; then
+        echo "$selected_theme" >"$THEMES_FILE"
+    else
+        yad --error --title="Error" --text="Selected theme not found." --center --on-top --borders=10
+    fi
+}
+
+show_theme_selection

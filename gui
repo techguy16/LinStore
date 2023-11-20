@@ -195,7 +195,7 @@ show_app_store() {
         list_items+=("$category")
     done <<<"$sorted_categories"
 
-    selected_category_raw=$(yad --text "Welcome to $APP_STORE_NAME\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+    selected_category_raw=$(GTK_THEME="Adwaita" yad --text "Welcome to $APP_STORE_NAME\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
         --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings" --no-headers)
 

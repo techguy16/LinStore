@@ -1,10 +1,37 @@
 #!/bin/bash
 
+APP_STORE_DIRECTORY="apps"
+CATEGORIES_FILE="etc/categories"
+THEMES_DIRECTORY="/usr/share/themes"
+THEMES_FILE="etc/theme"
+
+show_theme_selection() {
+    themes=()
+    while IFS= read -r -d '' theme; do
+        themes+=("$theme")
+    done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0)
+
+    selected_theme=$(yad --title="Select Theme" \
+        --text="Choose a theme:" \
+        --width="400" --height="300" --center --on-top --borders=10 --list --column="Themes" "${themes[@]}" )
+
+    if [ -z "$selected_theme" ]; then
+        yad --error --title="Error" --text="Please select a theme." --center --on-top --borders=10
+        return
+    fi
+
+    echo "$selected_theme" >"$THEMES_FILE"
+}
+
 show_settings() {
-    yad --form \
+    chmod +x theme
+    settings=$(yad --form \
         --title="Settings" \
-        --button="Create App:2" \
-        --button="Import App:3"
+        --button="Select Theme":"bash -c ./theme"  \
+        --button="Create App":"bash -c './createapp create'" \
+        --button="Import App":"bash -c './createapp import'" \
+        --width="400" --center --on-top --borders=10)
+    
 }
 
 show_settings
