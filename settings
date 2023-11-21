@@ -5,33 +5,57 @@ CATEGORIES_FILE="etc/categories"
 THEMES_DIRECTORY="/usr/share/themes"
 THEMES_FILE="etc/theme"
 
-show_theme_selection() {
-    themes=()
-    while IFS= read -r -d '' theme; do
-        themes+=("$theme")
-    done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0)
-
-    selected_theme=$(yad --title="Select Theme" \
-        --text="Choose a theme:" \
-        --width="400" --height="300" --center --on-top --borders=10 --list --column="Themes" "${themes[@]}" )
-
-    if [ -z "$selected_theme" ]; then
-        yad --error --title="Error" --text="Please select a theme." --center --on-top --borders=10
-        return
-    fi
-
-    echo "$selected_theme" >"$THEMES_FILE"
-}
-
 show_settings() {
     chmod +x theme
+    pkill -f "yad.*"
+    themes=()
+    while IFS= read -r -d '' theme; do
+        # Extract just the name of the theme directory from its full path
+        theme_name=$(basename "$theme")
+        themes+=("$theme_name")
+    done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+
+    theme_string=""
+    for theme in "${themes[@]}"; do
+        if [ -n "$theme_string" ]; then
+            theme_string+="!"
+        fi
+        theme_string+="$theme"
+    done
+
+    texteditors=("Visual Studio Code!Geany!Gedit!Mousepad!VSCodium")
+
     settings=$(yad --form \
         --title="Settings" \
-        --button="Select Theme":"bash -c ./theme"  \
-        --button="Create App":"bash -c './createapp create'" \
-        --button="Import App":"bash -c './createapp import'" \
-        --width="400" --center --on-top --borders=10)
-    
+        --width="400" --height="150" --center --on-top --borders=20 \
+        --field="Theme":CB "$theme_string" \
+        --field="Text Editor":CB "$texteditors" \
+        --frame="Create/Import App":LBL \
+        --button="<b>Create App</b>!gtk-new":"bash -c './createapp create'" \
+        --button="<b>Import App</b>!gtk-open":"bash -c './createapp import'" \
+        --button="<b>OK</b>!gtk-ok":0 \
+        --button="<b>Cancel</b>!gtk-cancel":1)
+
+    yad_ret=$?
+
+    if [[ $yad_ret -eq 0 ]]; then
+        selected_theme="${settings%%|*}"
+
+        if [ -z "$selected_theme" ]; then
+            yad --error --title="Error" --text="Please select a theme." --center --on-top --borders=10
+            return
+        fi
+
+        selected_theme_path=$(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -name "$selected_theme" -exec basename {} \; -quit)
+
+        if [ -n "$selected_theme_path" ]; then
+            echo "$selected_theme_path" > "$THEMES_FILE"
+        else
+            yad --error --title="Error" --text="Selected theme not found." --center --on-top --borders=10
+        fi
+    elif [[ $yad_ret -eq 252 ]]; then
+        ./gui
+    fi
 }
 
-show_settings
+show_settings > /dev/null

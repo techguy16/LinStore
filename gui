@@ -77,6 +77,15 @@ get_app_website() {
         echo "No description available."
     fi
 }
+theme_get() {
+    website_file="etc/theme"
+    if [ -e "$website_file" ]; then
+        cat "$website_file"
+    else
+        echo ""
+    fi
+}
+theme=$(theme_get)
 
 app_details_page() {
     selected_app_name="${1//|/}"
@@ -109,7 +118,7 @@ app_details_page() {
         echo "Installation script not found for this architecture."
     fi
 
-    yad --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
+    GTK_THEME="${theme}" yad --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
         --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
         --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" \
         --button="Install:$install_command" --button="Uninstall (unfunctional)" --close-on-extra </tmp/description.tmp
@@ -125,7 +134,7 @@ show_categories() {
         list_items+=("$category")
     done
 
-    selected_category_raw=$(yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+    selected_category_raw=$(GTK_THEME="${theme}" yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
         --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
 
@@ -145,7 +154,7 @@ show_apps_in_category() {
                 all_apps_list+=("$app_name")
             done
 
-            selected_app_name=$(yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+            selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
                 --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
         else
             apps_in_category="${category_apps["$1"]}"
@@ -159,7 +168,7 @@ show_apps_in_category() {
                 formatted_apps+=("$app")
             done
 
-            selected_app_name=$(yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+            selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
                 --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
         fi
 
@@ -185,19 +194,18 @@ show_app_store() {
 
     # Sort categories alphabetically and format with newlines
     sorted_categories=$(printf '%s\n' "${!categories[@]}" | sort)
-
+    
     list_items=()
     list_items=("images/categories/All Apps.png" "All Apps")
     while IFS= read -r category; do
         category_icon="images/categories/$category.png"
         list_items+=("$category_icon")
-
         list_items+=("$category")
     done <<<"$sorted_categories"
 
-    selected_category_raw=$(GTK_THEME="Adwaita" yad --text "Welcome to $APP_STORE_NAME\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+    selected_category_raw=$(GTK_THEME="${theme}" yad --text "Welcome to $APP_STORE_NAME\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
-        --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c ./settings" --no-headers)
+        --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c './settings'" --no-headers)
 
     selected_category="${selected_category_raw//|/}"
 

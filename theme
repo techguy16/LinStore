@@ -6,14 +6,26 @@ THEMES_FILE="etc/theme"
 show_theme_selection() {
     themes=()
     while IFS= read -r -d '' theme; do
-        # Extract just the name of the theme from its full path
+        # Extract just the name of the theme directory from its full path
         theme_name=$(basename "$theme")
         themes+=("$theme_name")
-    done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0)
+    done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+
+    theme_string=""
+    for theme in "${themes[@]}"; do
+        if [ -n "$theme_string" ]; then
+            theme_string+="!"
+        fi
+        theme_string+="$theme"
+    done
 
     selected_theme=$(yad --title="Select Theme" \
         --text="Choose a theme:" \
-        --width="400" --height="300" --center --on-top --borders=10 --list --column="Themes" "${themes[@]}")
+        --width="400" --height="100" --center --on-top --borders=10 --form \
+        --field="Theme":CB "$theme_string")
+    echo "$selected_theme"
+
+    # Extract selected theme name from the dropdown result
     selected_theme="${selected_theme//|/}"
 
     if [ -z "$selected_theme" ]; then
@@ -22,8 +34,10 @@ show_theme_selection() {
     fi
 
     # Get the full path of the selected theme using 'find'
-    if [ -n "$selected_theme" ]; then
-        echo "$selected_theme" >"$THEMES_FILE"
+    selected_theme_path=$(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -name "$selected_theme" -exec basename {} \; -quit)
+
+    if [ -n "$selected_theme_path" ]; then
+        echo "$selected_theme_path" > "$THEMES_FILE"
     else
         yad --error --title="Error" --text="Selected theme not found." --center --on-top --borders=10
     fi
