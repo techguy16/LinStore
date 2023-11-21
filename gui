@@ -198,14 +198,19 @@ show_app_store() {
     list_items=()
     list_items=("images/categories/All Apps.png" "All Apps")
     while IFS= read -r category; do
-        category_icon="images/categories/$category.png"
+        category_icon="images/categories/$category.png"  # Path to category icons
         list_items+=("$category_icon")
         list_items+=("$category")
     done <<<"$sorted_categories"
 
-    selected_category_raw=$(GTK_THEME="${theme}" yad --text "Welcome to $APP_STORE_NAME\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+    # Include the image/icon column in the list view
+    logo_height=$(identify -format "%h" "images/logo/logo-64.png")  # Fetching logo height
+    welcome_message="<big><b>Welcome to $APP_STORE_NAME</b></big>"
+    welcome_height=$((($APP_STORE_HEIGHT - $logo_height) / 2))  # Calculate vertical space for welcome message
+
+    selected_category_raw=$(GTK_THEME="${theme}" yad --text "$welcome_message\n\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="3" \
         "${list_items[@]}" \
-        --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c './settings'" --no-headers)
+        --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height")
 
     selected_category="${selected_category_raw//|/}"
 

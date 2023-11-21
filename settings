@@ -8,13 +8,12 @@ THEMES_FILE="etc/theme"
 show_settings() {
     chmod +x theme
     pkill -f "yad.*"
-    themes=()
+    themes=("System Default")
     while IFS= read -r -d '' theme; do
         # Extract just the name of the theme directory from its full path
         theme_name=$(basename "$theme")
         themes+=("$theme_name")
     done < <(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
-
     theme_string=""
     for theme in "${themes[@]}"; do
         if [ -n "$theme_string" ]; then
@@ -23,7 +22,7 @@ show_settings() {
         theme_string+="$theme"
     done
 
-    texteditors=("Visual Studio Code!Geany!Gedit!Mousepad!VSCodium")
+    texteditors=("System Default!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium")
 
     settings=$(yad --form \
         --title="Settings" \
@@ -36,6 +35,20 @@ show_settings() {
         --button="<b>OK</b>!gtk-ok":0 \
         --button="<b>Cancel</b>!gtk-cancel":1)
 
+    # Extracting the selected text editor value from settings
+    selected_text_editor=$(echo "$settings" | awk -F '|' '{print $2}')
+
+    # Echoing to the 'etc/editor' file based on the selected text editor
+    case "$selected_text_editor" in
+    "System Default") echo "xdg-open" >"etc/editor" ;;
+    "Visual Studio Code") echo "code" >"etc/editor" ;;
+    "Geany") echo "geany" >"etc/editor" ;;
+    "Gedit") echo "gedit" >"etc/editor" ;;
+    "Mousepad") echo "mousepad" >"etc/editor" ;;
+    "VSCodium") echo "codium" >"etc/editor" ;;
+    *) echo "$selected_text_editor" >"etc/editor" ;;
+    esac
+
     yad_ret=$?
 
     if [[ $yad_ret -eq 0 ]]; then
@@ -43,19 +56,24 @@ show_settings() {
 
         if [ -z "$selected_theme" ]; then
             yad --error --title="Error" --text="Please select a theme." --center --on-top --borders=10
+            ./settings
             return
         fi
 
-        selected_theme_path=$(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -name "$selected_theme" -exec basename {} \; -quit)
-
-        if [ -n "$selected_theme_path" ]; then
-            echo "$selected_theme_path" > "$THEMES_FILE"
+        if [[ $selected_theme -eq "System Default" ]]; then
+            selected_theme_path=""
+            echo "$selected_theme_path" >"$THEMES_FILE"
         else
-            yad --error --title="Error" --text="Selected theme not found." --center --on-top --borders=10
+            selected_theme_path=$(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -name "$selected_theme" -exec basename {} \; -quit)
+            echo "$selected_theme_path" >"$THEMES_FILE"
         fi
+            
+        ./gui
     elif [[ $yad_ret -eq 252 ]]; then
+        ./gui
+    elif [[ $yad_ret -eq 1 ]]; then
         ./gui
     fi
 }
 
-show_settings > /dev/null
+show_settings >/dev/null

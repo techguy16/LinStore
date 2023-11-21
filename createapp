@@ -3,6 +3,15 @@
 APP_STORE_DIRECTORY="apps"
 CATEGORIES_FILE="etc/categories"
 
+get_editor() {
+    app_name="$1"
+    creator_file="etc/editor"
+    if [ -e "$creator_file" ]; then
+        cat "$creator_file"
+    else
+        echo "xdg-open"
+    fi
+}
 select_category_pane() {
     category_list=()
     while read -r category; do
