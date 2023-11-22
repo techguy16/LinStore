@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Check if the necessary files are present in the current directory
+if [ ! -f "gui" ] || [ ! -f "createapp" ] || [ ! -f "settings" ]; then
+    echo "Cloning necessary files from the repository..."
+    git clone https://github.com/techguy16/linstore temp_dir || {
+        echo "Failed to clone repository. Exiting installation."
+        exit 1
+    }
+    # Copy necessary files to the current directory
+    cp -r temp_dir/* .
+fi
+
+# Create ~/.linstore if it doesn't exist
+mkdir -p ~/.linstore
+
+# Copy files to ~/.linstore
+cp -r * ~/.linstore
+
+# Create a desktop shortcut for gui
+cat <<EOF > ~/.local/share/applications/LinStore.desktop
+[Desktop Entry]
+Name=LinStore
+Comment=The lightest and fastest Linux app store.
+Exec=/home/$USER/.linstore/gui
+Type=Application
+Version=1.0
+Terminal=false
+StartupWMClass=LinStore
+Icon=/home/$USER/.linstore/images/logo/logo.png
+Categories=Utility;System;PackageManager;
+EOF
+
+echo "LinStore installed successfully!"

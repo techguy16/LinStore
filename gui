@@ -3,6 +3,11 @@
 APP_STORE_NAME="LinStore"
 APP_STORE_WIDTH=350
 APP_STORE_HEIGHT=600
+if [ ! -f "gui" ] || [ ! -f "createapp" ] || [ ! -f "settings" ]; then
+    cd .
+else
+    cd ~/.linstore
+fi
 
 declare -A categories
 declare -A category_apps
@@ -36,15 +41,35 @@ read_categories() {
     for app_dir in apps/*; do
         app_name=$(basename "$app_dir")
         category_file="apps/$app_name/category"
-        while IFS= read -r app_in_category; do
-            if [ -n "${categories[$app_in_category]}" ]; then
-                categories["$app_in_category"]+=" $app_name"
-                category_apps["$app_in_category"]+="|$app_name"
-            else
-                categories["$app_in_category"]="$app_name"
-                category_apps["$app_in_category"]="$app_name"
+        install_script="$app_dir/install"
+
+        # Check if the install script or architecture-specific install scripts exist for this app
+        if [ -e "$install_script" ]; then
+            while IFS= read -r app_in_category; do
+                if [ -n "${categories[$app_in_category]}" ]; then
+                    categories["$app_in_category"]+=" $app_name"
+                    category_apps["$app_in_category"]+="|$app_name"
+                else
+                    categories["$app_in_category"]="$app_name"
+                    category_apps["$app_in_category"]="$app_name"
+                fi
+            done <"$category_file"
+        else
+            architecture=$(cat ~/.linstore/architecture.txt)
+            install_script_arch="install-$architecture"
+
+            if [ -e "$app_dir/$install_script_arch" ]; then
+                while IFS= read -r app_in_category; do
+                    if [ -n "${categories[$app_in_category]}" ]; then
+                        categories["$app_in_category"]+=" $app_name"
+                        category_apps["$app_in_category"]+="|$app_name"
+                    else
+                        categories["$app_in_category"]="$app_name"
+                        category_apps["$app_in_category"]="$app_name"
+                    fi
+                done <"$category_file"
             fi
-        done <"$category_file"
+        fi
     done
 }
 
@@ -97,30 +122,30 @@ app_details_page() {
 
     echo "$creator"
     echo "$description" >/tmp/description.tmp
-    touch "~/.linstore/installed"
-    install_command=""
-    uninstall_command=""
-    architecture=$(cat ~/.linstore/architecture.txt)
-    install_script="install-$architecture"
     installed_file="~/.linstore/installed"
 
-    if [ -e "$app_directory/$install_script" ]; then
-        chmod +x "$app_directory/$install_script"
-        chmod +x "$app_directory/uninstall"
-        if grep -q "$selected_app_name" "$installed_file"; then
-            # App is installed, show uninstall button
-            uninstall_command="bash -c 'cd \"$app_directory\" && ./uninstall && sed -i \"/$selected_app_name/d\" \"$installed_file\"' && echo '$selected_app_name is uninstalled'"
-        else
-            # App is not installed, show install button
-            install_command="bash -c 'cd \"$app_directory\" && ./$install_script && echo \"$selected_app_name\" >> \"$installed_file\"' && echo '$selected_app_name is installed'"
-        fi
+    # password=$(GTK_THEME="${theme}" yad --title="Enter Password" --width="300" --height="100" --entry --hide-text --text="Enter your password")
+
+    if [ -e "$app_directory/install" ]; then
+        # 'install' script exists - Install for all architectures
+        chmod +x "$app_directory/install"
+        install_command="echo \"$password\" | sudo -S cd \"$app_directory\" && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed'"
     else
-        echo "Installation script not found for this architecture."
+        architecture=$(cat ~/.linstore/architecture.txt)
+        install_script="install-$architecture"
+
+        if [ -e "$app_directory/$install_script" ]; then
+            # Architecture-specific installation script exists - Install for the detected architecture
+            chmod +x "$app_directory/$install_script"
+            install_command="echo \"$password\" | sudo -S cd \"$app_directory\" && ./$install_script && echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed'"
+        else
+            echo "Installation script not found for this architecture."
+        fi
     fi
 
     GTK_THEME="${theme}" yad --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
         --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
-        --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" \
+        --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --image-on-top \
         --button="Install:$install_command" --button="Uninstall (unfunctional)" --close-on-extra </tmp/description.tmp
 
     rm /tmp/description.tmp
@@ -136,7 +161,7 @@ show_categories() {
 
     selected_category_raw=$(GTK_THEME="${theme}" yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
-        --list --image="images/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
+        --list --image="images/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
 
     selected_category="${selected_category_raw//|/}"
     echo "$selected_category"
@@ -155,7 +180,7 @@ show_apps_in_category() {
             done
 
             selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
+                --list --image="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
         else
             apps_in_category="${category_apps["$1"]}"
             echo "$apps_in_category"
@@ -169,7 +194,7 @@ show_apps_in_category() {
             done
 
             selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
+                --list --image="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
         fi
 
         button_clicked=$?
@@ -194,27 +219,47 @@ show_app_store() {
 
     # Sort categories alphabetically and format with newlines
     sorted_categories=$(printf '%s\n' "${!categories[@]}" | sort)
-    
+
     list_items=()
     list_items=("images/categories/All Apps.png" "All Apps")
     while IFS= read -r category; do
-        category_icon="images/categories/$category.png"  # Path to category icons
+        category_icon="images/categories/$category.png" # Path to category icons
         list_items+=("$category_icon")
         list_items+=("$category")
     done <<<"$sorted_categories"
 
-    # Include the image/icon column in the list view
-    logo_height=$(identify -format "%h" "images/logo/logo-64.png")  # Fetching logo height
-    welcome_message="<big><b>Welcome to $APP_STORE_NAME</b></big>"
-    welcome_height=$((($APP_STORE_HEIGHT - $logo_height) / 2))  # Calculate vertical space for welcome message
+    # Fetching a random line from the announcements file
+    random_announcement=$(shuf -n 1 etc/announcements)
 
-    selected_category_raw=$(GTK_THEME="${theme}" yad --text "$welcome_message\n\nThe lightest, and fastest Linux app store!" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="3" \
+    # Search function
+    search_apps() {
+        query=$(yad --title="Search Apps" --text="Enter app name:" --entry)
+        if [ -n "$query" ]; then
+            app_list=$(find apps/ -iname "*$query*" -type d -exec basename {} \;)
+            apps_found=()
+            for app in $app_list; do
+                app_icon="apps/$app/icon-24.png"
+                app_category_file="apps/$app/category"
+                app_category=$(head -n 1 "$app_category_file")
+                apps_found+=("$app_icon" "$app")
+            done
+            selected_category2=$(yad --title="Search Results" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}")
+            if [ -n "$selected_category2" ]; then
+                app_details_page "$selected_category2"
+            fi
+        fi
+    }
+
+    selected_category_raw=$(GTK_THEME="${theme}" yad --text "$random_announcement" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="3" \
         "${list_items[@]}" \
-        --list --image="images/logo/logo-64.png" --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height")
-
+        --list --image="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c './settings'" --button="Search":44 --no-headers --item-height="$welcome_height")
+    exval=$?
+    echo "$exval"
     selected_category="${selected_category_raw//|/}"
 
-    if [ -n "$selected_category" ]; then
+    if [ "$exval" == "44" ]; then
+        search_apps
+    elif [ -n "$selected_category" ]; then
         show_apps_in_category "$selected_category"
     fi
 }
