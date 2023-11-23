@@ -1,3 +1,22 @@
-echo "Installing package ${1}"
-sudo apt update > /dev/null 2>&1
-sudo apt install $1 > /dev/null 2>&1
+#!/bin/bash
+
+install_package() {
+    package="$1"
+
+    if [[ "$package" == http* ]]; then
+        echo "Downloading and installing $package..."
+        wget "$package" -O ./package.deb 2>&1
+        sudo dpkg -i ./package.deb 2>&1
+        rm -r ./package.deb
+    elif [[ "$package" == *.deb ]]; then
+        echo "Installing $package using dpkg..."
+        sudo dpkg -i "$package" 2>&1
+    else
+        echo "Installing $package using apt..."
+        sudo apt update > /dev/null 2>&1
+        sudo apt install "$package" -y > /dev/null 2>&1
+    fi
+}
+
+# Usage example: replace 'your_package_name' with the actual package name or URL
+install_package $1

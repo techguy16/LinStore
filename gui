@@ -126,34 +126,36 @@ app_details_page() {
 
     echo "$creator"
     echo "$description" >/tmp/description.tmp
-    installed_file="~/.linstore/installed"
+    installed_file="$HOME/.linstore/installed"
 
-    # password=$(GTK_THEME="${theme}" yad --title="Enter Password" --width="300" --height="100" --entry --hide-text --text="Enter your password")
+    password=$(GTK_THEME="${theme}" yad --title="Enter Password" --width="300" --height="100" --entry --hide-text --text="Enter your password")
 
     if [ -e "$app_directory/install" ]; then
         # 'install' script exists - Install for all architectures
-        chmod +x "$app_directory/install"
-        install_command="echo \"$password\" | sudo -S cd \"$app_directory\" && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed'"
+        install_command="(echo \"$password\" | sudo -S cd \"$app_directory\" && ./install) && (echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed')"
     else
-        architecture=$(cat ~/.linstore/architecture.txt)
+        architecture=$(cat "$HOME/.linstore/architecture.txt")
         install_script="install-$architecture"
 
         if [ -e "$app_directory/$install_script" ]; then
             # Architecture-specific installation script exists - Install for the detected architecture
-            chmod +x "$app_directory/$install_script"
-            install_command="echo \"$password\" | sudo -S cd \"$app_directory\" && ./$install_script && echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed'"
+            install_command="(echo \"$password\" | sudo -S cd \"$app_directory\" && ./$install_script) && (echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed')"
         else
-            echo "Installation script not found for this architecture."
+            install_command="echo 'Installation script not found for this architecture.'"
         fi
     fi
 
-    GTK_THEME="${theme}" yad --class LinStore --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
-        --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
-        --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-        --button="Install:$install_command" --button="Uninstall (unfunctional)" --close-on-unfocus </tmp/description.tmp
-
+    # Run yad command in the background without waiting for it to finish
+    (
+        GTK_THEME="${theme}" yad --class LinStore --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
+            --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
+            --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
+            --button="Install:$install_command" --button="Uninstall (unfunctional)" </tmp/description.tmp
+    )
+    
     rm /tmp/description.tmp
 }
+
 
 show_categories() {
     list_items=()
@@ -202,7 +204,7 @@ show_apps_in_category() {
 
         button_clicked=$?
         selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-
+        echo "$button_clicked"
         if [ $button_clicked -eq 4 ]; then
             show_app_store
             break
