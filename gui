@@ -3,7 +3,11 @@
 APP_STORE_NAME="LinStore"
 APP_STORE_WIDTH=350
 APP_STORE_HEIGHT=600
-if [ ! -f "gui" ] || [ ! -f "createapp" ] || [ ! -f "settings" ]; then
+pwd
+if ! command -v yad &>/dev/null; then
+    error "YAD needs to be installed to run LinStore."
+fi
+if [ -f "gui" ] || [ -f "createapp" ] || [ -f "settings" ]; then
     cd .
 else
     cd ~/.linstore
@@ -143,10 +147,10 @@ app_details_page() {
         fi
     fi
 
-    GTK_THEME="${theme}" yad --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
+    GTK_THEME="${theme}" yad --class LinStore --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
         --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
-        --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --image-on-top \
-        --button="Install:$install_command" --button="Uninstall (unfunctional)" --close-on-extra </tmp/description.tmp
+        --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
+        --button="Install:$install_command" --button="Uninstall (unfunctional)" --close-on-unfocus </tmp/description.tmp
 
     rm /tmp/description.tmp
 }
@@ -161,7 +165,7 @@ show_categories() {
 
     selected_category_raw=$(GTK_THEME="${theme}" yad --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
-        --list --image="images/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
+        --list --image="images/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
 
     selected_category="${selected_category_raw//|/}"
     echo "$selected_category"
@@ -180,10 +184,9 @@ show_apps_in_category() {
             done
 
             selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="!images/button/back.png"!"Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
         else
             apps_in_category="${category_apps["$1"]}"
-            echo "$apps_in_category"
             formatted_apps=()
 
             IFS='|' read -r -a app_list <<<"$apps_in_category"
@@ -194,7 +197,7 @@ show_apps_in_category() {
             done
 
             selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="!images/button/back.png"!"Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
         fi
 
         button_clicked=$?
@@ -233,28 +236,42 @@ show_app_store() {
 
     # Search function
     search_apps() {
-        query=$(yad --title="Search Apps" --text="Enter app name:" --entry)
+        query=$(GTK_THEME="${theme}" yad --title="Search Apps" --text="Enter app name:" --entry)
         if [ -n "$query" ]; then
-            app_list=$(find apps/ -iname "*$query*" -type d -exec basename {} \;)
+            app_list=$(ls -w 1 ./apps | awk 'BEGIN {ORS="\n"} {print}')
+            num_apps=$(echo "$app_list" | wc -l)
+            num_apps=$((num_apps))
+            echo "$num_apps"
+
             apps_found=()
-            for app in $app_list; do
-                app_icon="apps/$app/icon-24.png"
-                app_category_file="apps/$app/category"
-                app_category=$(head -n 1 "$app_category_file")
-                apps_found+=("$app_icon" "$app")
+            for app in ./apps/*; do
+                app_name=$(basename "$app")
+                if [[ "$app_name" == *"$query"* ]]; then
+                    app_icon="apps/$app_name/icon-24.png"
+                    app_category_file="$app/category"
+                    app_category=$(head -n 1 "$app_category_file")
+                    apps_found+=("$app_icon" "$app_name" "$app_category")
+                fi
             done
-            selected_category2=$(yad --title="Search Results" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}")
-            if [ -n "$selected_category2" ]; then
-                app_details_page "$selected_category2"
+
+            if [ ${#apps_found[@]} -eq 0 ]; then
+                GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
+                show_app_store
+            else
+                selected_category2=$(GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" --column="Category" "${apps_found[@]}" --borders=10)
+                if [ -n "$selected_category2" ]; then
+                    app_details_page "$selected_category2"
+                fi
             fi
+        else
+            show_app_store
         fi
     }
 
     selected_category_raw=$(GTK_THEME="${theme}" yad --text "$random_announcement" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="3" \
         "${list_items[@]}" \
-        --list --image="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Settings":"bash -c './settings'" --button="Search":44 --no-headers --item-height="$welcome_height")
+        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":44 --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
     exval=$?
-    echo "$exval"
     selected_category="${selected_category_raw//|/}"
 
     if [ "$exval" == "44" ]; then

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo ls > /dev/null
+
 # Check if the necessary files are present in the current directory
 if [ ! -f "gui" ] || [ ! -f "createapp" ] || [ ! -f "settings" ]; then
     echo "Cloning necessary files from the repository..."
@@ -13,7 +15,7 @@ fi
 
 # Create ~/.linstore if it doesn't exist
 mkdir -p ~/.linstore
-
+sudo cp tools/*_package /usr/local/bin
 # Copy files to ~/.linstore
 cp -r * ~/.linstore
 
@@ -25,7 +27,7 @@ Comment=The lightest and fastest Linux app store.
 Exec=/home/$USER/.linstore/gui
 Type=Application
 Version=1.0
-Terminal=false
+Terminal=true
 StartupWMClass=LinStore
 Icon=/home/$USER/.linstore/images/logo/logo.png
 Categories=Utility;System;PackageManager;

@@ -60,7 +60,7 @@ show_settings() {
             return
         fi
 
-        if [[ $selected_theme -eq "System Default" ]]; then
+        if [[ "$selected_theme" -eq "System Default" ]]; then
             selected_theme_path=""
             echo "$selected_theme_path" >"$THEMES_FILE"
         else
