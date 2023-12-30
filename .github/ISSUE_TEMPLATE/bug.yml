@@ -1,0 +1,59 @@
+name: Bug Report
+description: Is there a bug with LinStore? Let us know.
+labels: ["bug"]
+body:
+  - type: checkboxes
+    attributes:
+      label: Confirmations
+      options:
+      - label: I searched for similar bug reports in https://github.com/techguy16/LinStore/issues and found none were relevant to my issue.
+        required: true
+      - label: I tried updating LinStore and the issue is still not fixed.
+        required: false
+      - label: 'IMPORTANT: I promise to be active and respond to comments on this issue.'
+        required: true
+
+  - type: input
+    id: desc
+    attributes:
+      label: What happened?
+      description: Briefly explain what happened.
+      placeholder: "i.e OpenStream Music won't uninstall, Firefox doesn't show even though it's there."
+    validations:
+      required: true
+
+  - type: textarea
+    id: desc-long
+    attributes:
+      label: Description
+      description: A clear description of what the bug is and anything you did to fix it.
+      placeholder: Explain in detail what happened.
+    validations: 
+      required: true
+
+  - type: textarea
+    id: os
+    attributes:
+      label: What are the specs of your system (run the following command in your terminal)?
+      description: ~/.linstore/tools/sysinfo.sh
+      placeholder: |
+        System Information:
+        -------------------
+        Hostname: pop-os
+        Kernel Version: Linux 6.1.11-76060111-generic
+        Distro: Pop!_OS 22.04 LTS
+        CPU: Intel(R) Core(TM) i5-2310 CPU @ 2.90GHz
+        Memory: 7932MB
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Any errors?
+      description: Please provide any errors if available.
+      placeholder: <paste it here>
+      render: bash
+    validations:
+      required: false

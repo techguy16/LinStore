@@ -1,0 +1,40 @@
+name: App Suggestion
+title: EDIT ME! Include the app name.
+description: Suggest an app to be added to LinStore. For suggesting apps you did not create.
+labels: ["App Request"]
+body:
+  - type: input
+    id: app-name
+    attributes:
+      label: What is the app's name?
+      placeholder: i.e Firefox, Visual Studio Code
+    validations:
+      required: true
+      
+  - type: textarea
+    id: host
+    attributes:
+      label: (Optional) Where is the app's Git repository?
+      placeholder: i.e GitHub or Gitlab repository
+    validations:
+      required: false
+  
+  - type: textarea
+    id: about
+    attributes:
+      label: App info
+      description: What is the purpose of the app?
+      placeholder: What does the app do?
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      description: All of the following MUST be met BEFORE the app can be included.
+      options:
+        - label: I have confirmed that this app is legal and not piracy.
+          required: true
+        - label: I have confirmed that this app has never been suggested in https://github.com/techguy16/LinStore/issues and https://github.com/techguy16/LinStore/pulls, and it is not already in LinStore.
+          required: true
