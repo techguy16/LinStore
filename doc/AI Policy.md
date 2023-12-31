@@ -3,8 +3,8 @@ Seriously, who cares? AI is becoming a big part of our lives and if you want to 
 
 If you want to be extra careful, only use AIs listed here that have the status of "working".
 
-AI | Status
----|-------
-ChatGPT | <p style='color:green;'>Working</p>
-Bing | <p style='color:red;'>Avoid</p>. Creates code that looks like it works but doesn't.
-Google Bard | <p style='color:red;'>Avoid</p>. Creates code that looks like it works but doesn't.
+AI | Status | Why?
+---|--------|-----
+ChatGPT | Working
+Bing | Avoid | Creates code that looks like it works but doesn't.
+Google Bard | Avoid | Creates code that looks like it works but doesn't.
