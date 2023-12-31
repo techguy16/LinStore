@@ -17,9 +17,7 @@ else
 fi
 
 # Create ~/.linstore if it doesn't exist
-sudo cp tools/*_package /usr/local/bin
-echo 'alias install_packages="install_package"'
-echo 'alias remove_packages="remove_package"'
+sudo cp ~/.linstore/*_package /usr/local/bin
 # Copy files to ~/.linstore
 
 # Create a desktop shortcut for gui
