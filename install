@@ -1,32 +1,73 @@
 #!/bin/bash
 
-ls >/dev/null
+echo "Welcome to LinStore."
 
-echo "Cloning necessary files from the repository..."
-git clone https://github.com/techguy16/linstore temp_dir || {
-    echo "Failed to clone repository. Exiting installation."
+# Check if git and yad are installed
+missing_dependencies=false
+
+if ! command -v git &>/dev/null; then
+    echo "Git is not installed. Please install Git and rerun the installation."
+    missing_dependencies=true
+fi
+
+if ! command -v yad &>/dev/null; then
+    echo "YAD (Yet Another Dialog) is not installed."
+    read -rp "Do you want to install YAD? (Y/N): " choice
+    if [[ $choice =~ ^[Yy]$ ]]; then
+        echo "Installing YAD..."
+        sudo apt update
+        sudo apt install yad
+    else
+        echo "YAD is required for LinStore installation. Exiting."
+        missing_dependencies=true
+    fi
+fi
+
+if [ "$missing_dependencies" = true ]; then
+    exit 1
+fi
+
+# LinStore installation process
+temp_dir=$(mktemp -d) || {
+    echo "Failed to create a temporary directory. Exiting installation."
     exit 1
 }
-# Copy necessary files to the current directory
-mkdir -p ~/.linstore
-cp -r temp_dir/* ~/.linstore
-rm -r temp_dir
 
-# Create ~/.linstore if it doesn't exist
-sudo cp ~/.linstore/tools/*_package /usr/local/bin
-# Copy files to ~/.linstore
+# Clone repository to the temporary directory
+echo "Cloning necessary files from the repository..."
+if ! git clone https://github.com/techguy16/linstore "$temp_dir"; then
+    echo "Failed to clone repository. Exiting installation."
+    rm -rf "$temp_dir"  # Clean up temporary directory
+    exit 1
+fi
 
-# Create a desktop shortcut for gui
-cat <<EOF >~/.local/share/applications/LinStore.desktop
+# Copy necessary files to ~/.linstore
+echo "Copying files to the installation directory..."
+install_dir="$HOME/.linstore"
+mkdir -p "$install_dir"
+cp -r "$temp_dir"/* "$install_dir"
+rm -r "$temp_dir"  # Clean up temporary directory
+
+# Create a bin directory if it doesn't exist
+sudo mkdir -p /usr/local/bin
+
+# Copy files to /usr/local/bin
+echo "Copying executable files to /usr/local/bin..."
+sudo cp "$install_dir"/tools/*_package /usr/local/bin/
+
+# Create a desktop shortcut for GUI
+desktop_file="$HOME/.local/share/applications/LinStore.desktop"
+echo "Creating desktop shortcut..."
+cat <<EOF >"$desktop_file"
 [Desktop Entry]
 Name=LinStore
 Comment=The lightest and fastest Linux app store.
-Exec=/home/$USER/.linstore/gui
+Exec=$HOME/.linstore/gui
 Type=Application
 Version=1.0
 Terminal=false
 StartupWMClass=LinStore
-Icon=/home/$USER/.linstore/images/logo/logo.png
+Icon=$HOME/.linstore/images/logo/logo.png
 Categories=Utility;System;PackageManager;
 EOF
 
