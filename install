@@ -17,7 +17,7 @@ else
 fi
 
 # Create ~/.linstore if it doesn't exist
-sudo cp ~/.linstore/*_package /usr/local/bin
+sudo cp ~/.linstore/tools/*_package /usr/local/bin
 # Copy files to ~/.linstore
 
 # Create a desktop shortcut for gui
