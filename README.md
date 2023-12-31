@@ -2,6 +2,12 @@
 The only app store you'll ever need on Linux.
 Sadly the install function only works, so the uninstall doesn't. Please report any bugs to the issues tab.
 
+## Install
+To install LinStore, run the following command:
+```bash
+curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | bash
+```
+
 ## It's lighter than Pi-Apps?
 Yup. It is. See?
 

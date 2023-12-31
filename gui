@@ -152,10 +152,9 @@ app_details_page() {
             --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
             --button="Install:$install_command" --button="Uninstall (unfunctional)" </tmp/description.tmp
     )
-    
+
     rm /tmp/description.tmp
 }
-
 
 show_categories() {
     list_items=()
@@ -248,22 +247,22 @@ show_app_store() {
             apps_found=()
             for app in ./apps/*; do
                 app_name=$(basename "$app")
-                if [[ "$app_name" == *"$query"* ]]; then
+                if [[ "${app_name,,}" == *"${query,,}"* ]]; then
                     app_icon="apps/$app_name/icon-24.png"
                     app_category_file="$app/category"
                     app_category=$(head -n 1 "$app_category_file")
-                    apps_found+=("$app_icon" "$app_name" "$app_category")
+                    apps_found+=("$app_icon" "$app_name")
                 fi
             done
 
-            if [ ${#apps_found[@]} -eq 0 ]; then
-                GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
-                show_app_store
-            else
+            if [ ${#apps_found[@]} -gt 0 ]; then
                 selected_category2=$(GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" --column="Category" "${apps_found[@]}" --borders=10)
                 if [ -n "$selected_category2" ]; then
                     app_details_page "$selected_category2"
                 fi
+            else
+                GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
+                show_app_store
             fi
         else
             show_app_store

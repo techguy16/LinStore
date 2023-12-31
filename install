@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo ls > /dev/null
+ls > /dev/null
 
 # Check if the necessary files are present in the current directory
 if [ ! -f "gui" ] || [ ! -f "createapp" ] || [ ! -f "settings" ]; then
@@ -10,14 +10,17 @@ if [ ! -f "gui" ] || [ ! -f "createapp" ] || [ ! -f "settings" ]; then
         exit 1
     }
     # Copy necessary files to the current directory
-    cp -r temp_dir/* .
+    mkdir -p ~/.linstore
+    cp -r temp_dir/* ~/.linstore
+else
+    echo Files already exist, skip.
 fi
 
 # Create ~/.linstore if it doesn't exist
-mkdir -p ~/.linstore
 sudo cp tools/*_package /usr/local/bin
+echo 'alias install_packages="install_package"'
+echo 'alias remove_packages="remove_package"'
 # Copy files to ~/.linstore
-cp -r * ~/.linstore
 
 # Create a desktop shortcut for gui
 cat <<EOF > ~/.local/share/applications/LinStore.desktop
