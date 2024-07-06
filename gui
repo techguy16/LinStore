@@ -117,43 +117,65 @@ theme_get() {
 theme=$(theme_get)
 
 app_details_page() {
-    selected_app_name="${1//|/}"
-    app_directory="apps/$selected_app_name"
-    app_icon="$app_directory/icon-48.png"
-    description=$(get_app_description "$selected_app_name")
-    creator=$(get_app_creator "$selected_app_name")
-    website=$(get_app_website "$selected_app_name")
+    local selected_app_name="${1//|/}"
+    local app_directory="apps/$selected_app_name"
+    local app_icon="$app_directory/icon-48.png"
+    local description=$(get_app_description "$selected_app_name")
+    local creator=$(get_app_creator "$selected_app_name")
+    local website=$(get_app_website "$selected_app_name")
+    local installed_file="$HOME/.linstore/installed"
+    local uninstalled_file="$HOME/.linstore/uninstalled"
+    local theme="your_theme_name_here"  # Replace with your GTK theme name
+    local password
+    local sudo_prefix=""
 
-    echo "$creator"
-    echo "$description" >/tmp/description.tmp
-    installed_file="$HOME/.linstore/installed"
+    # Prompt user for password securely
+    password=$(yad --title="Enter Password" --width="300" --height="100" --entry --hide-text --text="Enter your password")
 
-    password=$(GTK_THEME="${theme}" yad --title="Enter Password" --width="300" --height="100" --entry --hide-text --text="Enter your password")
+    if [ "$password" ]; then
+        sudo_prefix="echo '$password' | sudo -S"
+    fi
 
     if [ -e "$app_directory/install" ]; then
         # 'install' script exists - Install for all architectures
-        install_command="(echo \"$password\" | sudo -S cd \"$app_directory\" && ./install) && (echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed')"
+        install_command="sudo bash -c \"cd '$app_directory' && chmod +x install && ./install\" && (echo '$selected_app_name' >> '$installed_file' && echo '$selected_app_name is installed')"
     else
-        architecture=$(cat "$HOME/.linstore/architecture.txt")
-        install_script="install-$architecture"
+        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local install_script="install-$architecture"
 
         if [ -e "$app_directory/$install_script" ]; then
             # Architecture-specific installation script exists - Install for the detected architecture
-            install_command="(echo \"$password\" | sudo -S cd \"$app_directory\" && ./$install_script) && (echo \"$selected_app_name\" >> \"$installed_file\" && echo '$selected_app_name is installed')"
+            install_command="sudo bash -c \"cd '$app_directory' && chmod +x $install_script && ./$install_script\" && (echo '$selected_app_name' >> '$installed_file' && echo '$selected_app_name is installed')"
         else
             install_command="echo 'Installation script not found for this architecture.'"
         fi
     fi
 
+    if [ -e "$app_directory/uninstall" ]; then
+        # 'uninstall' script exists - Uninstall for all architectures
+        uninstall_command="sudo bash -c \"cd '$app_directory' && chmod +x uninstall && ./uninstall\" && (echo '$selected_app_name' >> '$uninstalled_file' && echo '$selected_app_name has been uninstalled')"
+    else
+        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local uninstall_script="uninstall-$architecture"
+
+        if [ -e "$app_directory/$uninstall_script" ]; then
+            # Architecture-specific uninstallation script exists - Uninstall for the detected architecture
+            uninstall_command="sudo bash -c \"cd '$app_directory' && chmod +x $uninstall_script && ./$uninstall_script\" && (echo '$selected_app_name' >> '$uninstalled_file' && echo '$selected_app_name has been uninstalled')"
+        else
+            uninstall_command="echo 'Uninstallation script not found for this architecture.'"
+        fi
+    fi
+
     # Run yad command in the background without waiting for it to finish
     (
-        GTK_THEME="${theme}" yad --class LinStore --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
+        yad --class LinStore --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
             --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
-            --field="<b>Description</b>:TXT" --no-edit --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            --button="Install:$install_command" --button="Uninstall (unfunctional)" </tmp/description.tmp
+            --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
+            --button="Install":"$install_command" --button="Uninstall":"$uninstall_command"
     )
 
-    rm /tmp/description.tmp
+    # Cleanup temporary files
+    rm -f /tmp/description.tmp
 }
 
 show_categories() {
