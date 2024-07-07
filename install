@@ -46,6 +46,8 @@ echo "Copying files to the installation directory..."
 install_dir="$HOME/.linstore"
 mkdir -p "$install_dir"
 cp -r "$temp_dir"/* "$install_dir"
+cd "$install_dir"
+chmod +x *
 rm -r "$temp_dir"  # Clean up temporary directory
 
 # Create a bin directory if it doesn't exist

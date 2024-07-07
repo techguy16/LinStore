@@ -1,0 +1,36 @@
+#!/bin/bash
+# Not really an "API", but let's call it that.
+
+search_apps() {
+    query=$(GTK_THEME="${theme}" yad --title="Search Apps" --text="Enter app name:" --entry)
+    if [ -n "$query" ]; then
+        app_list=$(ls -w 1 ./apps | awk 'BEGIN {ORS="\n"} {print}')
+        num_apps=$(echo "$app_list" | wc -l)
+        num_apps=$((num_apps))
+        echo "$num_apps"
+
+        apps_found=()
+        for app in ./apps/*; do
+            app_name=$(basename "$app")
+            if [[ "${app_name,,}" == *"${query,,}"* ]]; then
+                app_icon="apps/$app_name/icon-24.png"
+                app_category_file="$app/category"
+                app_category=$(head -n 1 "$app_category_file")
+                apps_found+=("$app_icon" "$app_name")
+            fi
+        done
+
+        if [ ${#apps_found[@]} -gt 0 ]; then
+            selected_category2=$(GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10)
+            if [ -n "$selected_category2" ]; then
+                ./gui showdetails "${selected_category2}"
+            fi
+        else
+            GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
+        fi
+    fi
+}
+
+if [[ $1 == "search" ]]; then
+    search_apps
+fi

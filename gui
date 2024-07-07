@@ -129,13 +129,6 @@ app_details_page() {
     local password
     local sudo_prefix=""
 
-    # Prompt user for password securely
-    password=$(yad --title="Enter Password" --width="300" --height="100" --entry --hide-text --text="Enter your password")
-
-    if [ "$password" ]; then
-        sudo_prefix="echo '$password' | sudo -S"
-    fi
-
     if [ -e "$app_directory/install" ]; then
         # 'install' script exists - Install for all architectures
         install_command="sudo bash -c \"cd '$app_directory' && chmod +x install && ./install\" && (echo '$selected_app_name' >> '$installed_file' && echo '$selected_app_name is installed')"
@@ -258,51 +251,24 @@ show_app_store() {
     random_announcement=$(shuf -n 1 etc/announcements)
 
     # Search function
-    search_apps() {
-        query=$(GTK_THEME="${theme}" yad --title="Search Apps" --text="Enter app name:" --entry)
-        if [ -n "$query" ]; then
-            app_list=$(ls -w 1 ./apps | awk 'BEGIN {ORS="\n"} {print}')
-            num_apps=$(echo "$app_list" | wc -l)
-            num_apps=$((num_apps))
-            echo "$num_apps"
-
-            apps_found=()
-            for app in ./apps/*; do
-                app_name=$(basename "$app")
-                if [[ "${app_name,,}" == *"${query,,}"* ]]; then
-                    app_icon="apps/$app_name/icon-24.png"
-                    app_category_file="$app/category"
-                    app_category=$(head -n 1 "$app_category_file")
-                    apps_found+=("$app_icon" "$app_name")
-                fi
-            done
-
-            if [ ${#apps_found[@]} -gt 0 ]; then
-                selected_category2=$(GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" --column="Category" "${apps_found[@]}" --borders=10)
-                if [ -n "$selected_category2" ]; then
-                    app_details_page "$selected_category2"
-                fi
-            else
-                GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
-                show_app_store
-            fi
-        else
-            show_app_store
-        fi
-    }
 
     selected_category_raw=$(GTK_THEME="${theme}" yad --text "$random_announcement" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="3" \
         "${list_items[@]}" \
-        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":44 --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
+        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search'" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
     exval=$?
     selected_category="${selected_category_raw//|/}"
 
     if [ "$exval" == "44" ]; then
-        search_apps
+        ./api search && show_app_store
     elif [ -n "$selected_category" ]; then
         show_apps_in_category "$selected_category"
     fi
 }
 
-detect_and_write_architecture
-show_app_store
+if [[ $1 == "showdetails" ]]; then
+    echo $2
+    app_details_page "$2"
+else
+    detect_and_write_architecture
+    show_app_store
+fi
