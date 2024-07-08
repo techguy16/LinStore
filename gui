@@ -117,6 +117,15 @@ theme_get() {
 theme=$(theme_get)
 
 app_details_page() {
+    sleep 0.1
+    pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
+    x=$(echo "$pos" | cut -d' ' -f1)
+    y=$(echo "$pos" | cut -d' ' -f2)
+    x2=$((x + 343))  # Adjust this value as needed to position the second dialog
+    y2=$((y - 82))   # Adjust this value as needed to position the second dialog
+    echo $x2
+    echo $y2
+
     local selected_app_name="${1//|/}"
     local app_directory="apps/$selected_app_name"
     local app_icon="$app_directory/icon-48.png"
@@ -161,7 +170,7 @@ app_details_page() {
 
     # Run yad command in the background without waiting for it to finish
     (
-        yad --class LinStore --title="App Details" --width="450" --height="$APP_STORE_HEIGHT" --form \
+        yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
             --button="Install":"$install_command" --button="Uninstall":"$uninstall_command"
@@ -199,8 +208,8 @@ show_apps_in_category() {
                 all_apps_list+=("$app_name")
             done
 
-            GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" \
+            GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="2" \
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "All Apps Category" --column "Icon:IMG" --column "Apps" \
                 --button="!images/button/back.png!Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers \
                 --select-action='bash -c "/gui showdetails \"%s\""'
         else
@@ -214,8 +223,8 @@ show_apps_in_category() {
                 formatted_apps+=("$app")
             done
 
-            GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" \
+            GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="2" \
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$1 Category" --column "Icon:IMG" --column "Apps" \
                 --button="!images/button/back.png!Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers \
                 --select-action='bash -c "./gui showdetails \"%s\""'
         fi
@@ -250,7 +259,7 @@ show_app_store() {
 
     # Search function
 
-    selected_category_raw=$(GTK_THEME="${theme}" yad --text "$random_announcement" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="3" \
+    selected_category_raw=$(GTK_THEME="${theme}" yad --text "$random_announcement" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="3" \
         "${list_items[@]}" \
         --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search'" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
     exval=$?
