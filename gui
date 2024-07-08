@@ -199,8 +199,10 @@ show_apps_in_category() {
                 all_apps_list+=("$app_name")
             done
 
-            selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="!images/button/back.png"!"Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers)
+            GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" \
+                --button="!images/button/back.png!Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers \
+                --select-action='bash -c "/gui showdetails \"%s\""'
         else
             apps_in_category="${category_apps["$1"]}"
             formatted_apps=()
@@ -212,24 +214,20 @@ show_apps_in_category() {
                 formatted_apps+=("$app")
             done
 
-            selected_app_name=$(GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" --button="!images/button/back.png"!"Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers)
+            GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Apps" \
+                --button="!images/button/back.png!Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers \
+                --select-action='bash -c "./gui showdetails \"%s\""'
         fi
 
         button_clicked=$?
-        selected_app=$(echo -n "$selected_app_name" | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-        echo "$button_clicked"
         if [ $button_clicked -eq 4 ]; then
             show_app_store
             break
         fi
 
-        if [ -n "$selected_app" ]; then
-            app_details_page "$selected_app"
-        else
-            show_app_store
-            break
-        fi
+        show_app_store
+        break
     done
 }
 
@@ -266,8 +264,7 @@ show_app_store() {
 }
 
 if [[ $1 == "showdetails" ]]; then
-    echo $2
-    app_details_page "$2"
+    app_details_page "$(echo $2 | awk -F"'" '{print $4}')"
 else
     detect_and_write_architecture
     show_app_store
