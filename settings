@@ -24,6 +24,7 @@ show_settings() {
 
     texteditors=("System Default!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium")
 
+    # I don't know why these are around this way, and why they only work that way.
     settings=$(yad --form \
         --title="Settings" --columns=1 --output-by-row \
         --width="150" --height="400" --center --on-top --borders=20 \

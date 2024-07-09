@@ -127,10 +127,11 @@ import_zip_file() {
     unzip "$import_file" -d "$APP_STORE_DIRECTORY"
 }
 
-if [ "$1" == "create" ]; then
-    select_category_pane
-elif [ "$1" == "import" ]; then
+yad --error --text "$1"
+if [[ $1 == "import" ]]; then
     import_zip_file
+elif [[ $1 == "create" ]]; then
+    select_category_pane
 else
     echo "Invalid argument. Please provide 'create' or 'import'."
     exit 1
