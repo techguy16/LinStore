@@ -8,7 +8,7 @@ THEMES_FILE="etc/theme"
 show_settings() {
     chmod +x theme
     pkill -f "yad.*"
-    themes=("System Default")
+    themes+="System Default"
     while IFS= read -r -d '' theme; do
         # Extract just the name of the theme directory from its full path
         theme_name=$(basename "$theme")
@@ -25,13 +25,13 @@ show_settings() {
     texteditors=("System Default!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium")
 
     settings=$(yad --form \
-        --title="Settings" \
-        --width="400" --height="150" --center --on-top --borders=20 \
+        --title="Settings" --columns=1 --output-by-row \
+        --width="150" --height="400" --center --on-top --borders=20 \
         --field="Theme":CB "$theme_string" \
         --field="Text Editor":CB "$texteditors" \
-        --frame="Create/Import App":LBL \
-        --button="<b>Create App</b>!gtk-new":"bash -c './createapp create'" \
-        --button="<b>Import App</b>!gtk-open":"bash -c './createapp import'" \
+        --field=:LBL \
+        --field="<b>Create App</b>"!gtk-new:FBTN "bash -c './createapp create'" \
+        --field="<b>Import App</b>"!gtk-open:FBTN "bash -c './createapp import'" \
         --button="<b>OK</b>!gtk-ok":0 \
         --button="<b>Cancel</b>!gtk-cancel":1)
 
@@ -54,14 +54,8 @@ show_settings() {
     if [[ $yad_ret -eq 0 ]]; then
         selected_theme="${settings%%|*}"
 
-        if [ -z "$selected_theme" ]; then
-            yad --error --title="Error" --text="Please select a theme." --center --on-top --borders=10
-            ./settings
-            return
-        fi
-
         if [[ "$selected_theme" -eq "System Default" ]]; then
-            selected_theme_path=""
+            selected_theme_path=" "
             echo "$selected_theme_path" >"$THEMES_FILE"
         else
             selected_theme_path=$(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -name "$selected_theme" -exec basename {} \; -quit)
