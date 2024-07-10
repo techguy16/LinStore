@@ -1,6 +1,5 @@
 # LinStore
-The only app store you'll ever need on Linux.
-Sadly the install function only works, so the uninstall doesn't. Please report any bugs to the issues tab.
+The fastest and lightest app store for Linux.
 
 ## Install
 To install LinStore, run the following command:
@@ -8,20 +7,21 @@ To install LinStore, run the following command:
 curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | bash
 ```
 
-## It's lighter than Pi-Apps?
-Yup. It is. See?
-
-![LinStore's Resources](images/LinStoreResources.png "LinStore's Resources")
-![Pi-Apps Resources](images/Pi-AppsResources.png "Pi-Apps Resources")
-
 ## Installing Pi-Apps apps
-LinStore has support to install apps from Pi-Apps that aren't packages (I'm sorry Botspot). 
+LinStore has support to install non-package apps from Pi-Apps (I'm sorry Botspot). 
 
 <code>install_package</code> and <code>remove_package</code> are separate scripts, unlike Pi-Apps which uses a large script (<code>manage</code>) for everything.
 
-## Architectures supported
-* AMD64
-> **We don't call it AMD64** - some anonymous person
-* i386
-* ARM64
-* ARMv7l
+## FAQ
+#### Is it lighter than Pi-Apps?
+Yes, it is. In my testing, LinStore uses 8.8MiB of memory, wheras Pi-Apps uses 9.8MiB of memory. It's not much, but the CPU usage is also less.
+
+| <img src="images/LinStoreResources.png" alt="LinStore's Resources" width="350"/> | <img src="images/Pi-AppsResources.png" alt="Pi-Apps Resources" width="350"/> |
+|---|---|
+
+## Supported distros
+- Debian
+- Ubuntu
+- Linux Mint
+- Pop!_OS
+- Raspberry Pi OS
