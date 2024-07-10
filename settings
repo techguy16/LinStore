@@ -54,7 +54,7 @@ show_settings() {
     if [[ $yad_ret -eq 0 ]]; then
         selected_theme="${settings%%|*}"
 
-        if [[ "$selected_theme" -eq "System Default" ]]; then
+        if [[ "$selected_theme" == "System Default" ]]; then
             selected_theme_path=" "
             echo "$selected_theme_path" >"$THEMES_FILE"
         else
