@@ -30,9 +30,8 @@ show_settings() {
         --width="150" --height="400" --center --on-top --borders=20 \
         --field="Theme":CB "$theme_string" \
         --field="Text Editor":CB "$texteditors" \
-        --field=:LBL \
-        --field="<b>Create App</b>"!gtk-new:FBTN "./createapp create" \
-        --field="<b>Import App</b>"!gtk-open:FBTN "./createapp import" \
+        --field="<b>Create App</b>"!gtk-new!"Create an app for LinStore and Pi-Apps!":FBTN "./createapp create" \
+        --field="<b>Import App</b>"!gtk-open!"Import an app not available in the repository":FBTN "./createapp import" \
         --button="<b>OK</b>!gtk-ok":0 \
         --button="<b>Cancel</b>!gtk-cancel":1)
 
