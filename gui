@@ -121,50 +121,71 @@ app_details_page() {
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
     x=$(echo "$pos" | cut -d' ' -f1)
     y=$(echo "$pos" | cut -d' ' -f2)
-    x2=$((x + 343))  # Adjust this value as needed to position the second dialog
-    y2=$((y - 82))   # Adjust this value as needed to position the second dialog
+    x2=$((x + 343)) # Adjust this value as needed to position the second dialog
+    y2=$((y - 82))  # Adjust this value as needed to position the second dialog
     echo $x2
     echo $y2
 
     local selected_app_name="${1//|/}"
     local app_directory="apps/$selected_app_name"
     local app_icon="$app_directory/icon-48.png"
+    echo $app_directory
     local description=$(get_app_description "$selected_app_name")
     local creator=$(get_app_creator "$selected_app_name")
     local website=$(get_app_website "$selected_app_name")
     local installed_file="$HOME/.linstore/installed"
     local uninstalled_file="$HOME/.linstore/uninstalled"
-    local theme="your_theme_name_here"  # Replace with your GTK theme name
+    local theme="your_theme_name_here" # Replace with your GTK theme name
     local password
     local sudo_prefix=""
 
     if [ -e "$app_directory/install" ]; then
         # 'install' script exists - Install for all architectures
-        install_command="sudo bash -c \"cd '$app_directory' && chmod +x install && ./install\" && (echo '$selected_app_name' >> '$installed_file' && echo '$selected_app_name is installed')"
+        temp_script=$(mktemp)
+        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\"" >"$temp_script"
+        install_command="x-terminal-emulator -e \"sudo bash $temp_script\""
     else
-        local architecture=$(cat "$HOME/.linstore/architecture.txt")
-        local install_script="install-$architecture"
+        architecture=$(cat "$HOME/.linstore/architecture.txt")
+        install_script="install-$architecture"
 
         if [ -e "$app_directory/$install_script" ]; then
             # Architecture-specific installation script exists - Install for the detected architecture
-            install_command="sudo bash -c \"cd '$app_directory' && chmod +x $install_script && ./$install_script\" && (echo '$selected_app_name' >> '$installed_file' && echo '$selected_app_name is installed')"
+            temp_script=$(mktemp)
+            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\"" >"$temp_script"
+            install_command="x-terminal-emulator -e \"sudo bash $temp_script\""
         else
-            install_command="echo 'Installation script not found for this architecture.'"
+            if [ -e "$app_directory/packages" ]; then
+                temp_script=$(mktemp)
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\"" >"$temp_script"
+                install_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+            else
+                install_command="echo 'Installation script not found for this architecture.'"
+            fi
         fi
     fi
 
     if [ -e "$app_directory/uninstall" ]; then
         # 'uninstall' script exists - Uninstall for all architectures
-        uninstall_command="sudo bash -c \"cd '$app_directory' && chmod +x uninstall && ./uninstall\" && (echo '$selected_app_name' >> '$uninstalled_file' && echo '$selected_app_name has been uninstalled')"
+        temp_script=$(mktemp)
+        echo "cd \"$app_directory\" && chmod +x uninstall && ./uninstall && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+        uninstall_command="x-terminal-emulator -e \"sudo bash $temp_script\""
     else
-        local architecture=$(cat "$HOME/.linstore/architecture.txt")
-        local uninstall_script="uninstall-$architecture"
+        architecture=$(cat "$HOME/.linstore/architecture.txt")
+        uninstall_script="uninstall-$architecture"
 
         if [ -e "$app_directory/$uninstall_script" ]; then
             # Architecture-specific uninstallation script exists - Uninstall for the detected architecture
-            uninstall_command="sudo bash -c \"cd '$app_directory' && chmod +x $uninstall_script && ./$uninstall_script\" && (echo '$selected_app_name' >> '$uninstalled_file' && echo '$selected_app_name has been uninstalled')"
+            temp_script=$(mktemp)
+            echo "cd \"$app_directory\" && chmod +x \"$uninstall_script\" && ./\"$uninstall_script\" && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+            uninstall_command="x-terminal-emulator -e \"sudo bash $temp_script\""
         else
-            uninstall_command="echo 'Uninstallation script not found for this architecture.'"
+            if [ -e "$app_directory/packages" ]; then
+                temp_script=$(mktemp)
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+                uninstall_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+            else
+                uninstall_command="echo 'Uninstallation script not found for this architecture.'"
+            fi
         fi
     fi
 
@@ -211,7 +232,7 @@ show_apps_in_category() {
             GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "All Apps Category" --column "Icon:IMG" --column "Apps" \
                 --button="!images/button/back.png!Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers \
-                --select-action='bash -c "/gui showdetails \"%s\""'
+                --select-action='bash -c "./gui showdetails \"%s\""'
         else
             apps_in_category="${category_apps["$1"]}"
             formatted_apps=()
