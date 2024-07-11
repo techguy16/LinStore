@@ -247,7 +247,7 @@ show_apps_in_category() {
             GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$1 Category" --column "Icon:IMG" --column "Apps" \
                 --button="!images/button/back.png!Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers \
-                --select-action='bash -c "./gui showdetails \"%s\""'
+                --dclick-action='bash -c "./gui showdetails \"%s\""'
         fi
 
         button_clicked=$?
