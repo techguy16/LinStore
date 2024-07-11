@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_STORE_NAME="LinStore"
-APP_STORE_WIDTH=350
+APP_STORE_WIDTH=320
 APP_STORE_HEIGHT=600
 pwd
 if ! command -v yad &>/dev/null; then
@@ -121,7 +121,7 @@ app_details_page() {
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
     x=$(echo "$pos" | cut -d' ' -f1)
     y=$(echo "$pos" | cut -d' ' -f2)
-    x2=$((x + 343)) # Adjust this value as needed to position the second dialog
+    x2=$((x + 313)) # Adjust this value as needed to position the second dialog
     y2=$((y - 82))  # Adjust this value as needed to position the second dialog
     echo $x2
     echo $y2
