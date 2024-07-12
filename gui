@@ -139,11 +139,14 @@ app_details_page() {
     local password
     local sudo_prefix=""
 
+    log_file="$HOME/.linstore/install_log.txt"
+    mkdir -p ~/.linstore/installscripts
+
     if [ -e "$app_directory/install" ]; then
         # 'install' script exists - Install for all architectures
         temp_script=$(mktemp)
-        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && mkdir -p ~/.linstore/installscripts && cat install > \"~/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-        install_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+        install_command="x-terminal-emulator -e 'bash -c \"sudo bash $temp_script\"'"
     else
         architecture=$(cat "$HOME/.linstore/architecture.txt")
         install_script="install-$architecture"
@@ -151,13 +154,13 @@ app_details_page() {
         if [ -e "$app_directory/$install_script" ]; then
             # Architecture-specific installation script exists - Install for the detected architecture
             temp_script=$(mktemp)
-            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && mkdir -p ~/.linstore/installscripts && cat \"$install_script\" > \"~/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-            install_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+            install_command="x-terminal-emulator -e 'bash -c \"sudo bash $temp_script\"'"
         else
             if [ -e "$app_directory/packages" ]; then
                 temp_script=$(mktemp)
-                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && mkdir -p ~/.linstore/installscripts && cat packages > \"~/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-                install_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+                install_command="x-terminal-emulator -e 'bash -c \"sudo bash $temp_script\"'"
             else
                 install_command="echo 'Installation script not found for this architecture.'"
             fi

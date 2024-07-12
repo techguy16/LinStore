@@ -1,3 +1,57 @@
 #!/bin/bash
 
-echo "E"
+check_for_updates() {
+    local repository_path="./apps"
+    local installed_scripts_path="$HOME/.linstore/installscripts"
+    local updates=()
+
+    mkdir -p "$installed_scripts_path"
+
+    echo "Checking for updates..."
+
+    for installed_script in "$installed_scripts_path"/*; do
+        app_name=$(basename "$installed_script")
+
+        # Ignore specific files
+        if [[ "$app_name" == "test" ]]; then
+            continue
+        fi
+
+        app_directory="$repository_path/$app_name"
+
+        if [ -d "$app_directory" ]; then
+            needs_update=true
+            for repo_script in "$app_directory"/*; do
+                if [ -e "$repo_script" ]; then
+                    if diff -q "$installed_script" "$repo_script" > /dev/null; then
+                        needs_update=false
+                        break
+                    fi
+                fi
+            done
+
+            if $needs_update; then
+                icon_path="$app_directory/icon-16.png"  # Fixed icon path
+                if [ -e "$icon_path" ]; then
+                    updates+=(TRUE "$icon_path" "$app_name")
+                else
+                    updates+=(TRUE "" "$app_name")  # No icon found, keep structure
+                fi
+            fi
+        else
+            updates+=(FALSE "" "$app_name (No directory found)")  # Indicate missing directory
+        fi
+    done
+
+    # Show results in Yad
+    if [ ${#updates[@]} -eq 0 ]; then
+        yad --info --title="Update Check" --text="All apps are up to date!" --width=300
+    else
+        # Prepare the list format for Yad
+        yad --list --title="Apps Needing Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
+            "${updates[@]}" --checklist --width=400 --height=300
+    fi
+}
+
+# Call the function
+check_for_updates
