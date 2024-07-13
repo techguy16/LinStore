@@ -1,1 +1,44 @@
-wget -qO- https://raw.githubusercontent.com/gl91306/lunar/master/install.sh | bash
+#!/bin/bash
+
+if [[ -f "/usr/bin/apt" ]]
+then
+    sudo apt install kmod
+fi
+if [[ -f "/usr/bin/pacman" ]]
+then
+    sudo pacman -S kmod
+fi
+sudo modprobe fuse
+
+mkdir ~/.local
+cd ~/.local
+
+echo "Downloading split files"
+wget https://github.com/gl91306/lunar/raw/master/lunarclient-3.0.3-armv7l.AppImage.1
+wget https://github.com/gl91306/lunar/raw/master/lunarclient-3.0.3-armv7l.AppImage.2
+
+echo "Combining split files"
+cat lunarclient-3.0.3-armv7l.AppImage.* > lunarclient-3.0.3-armv7l.AppImage
+rm -rf lunarclient-3.0.3-armv7l.AppImage.*
+cd
+mkdir ~/.local/lunarassets
+cd
+
+chmod +x $HOME/lunarclient-3.0.3-armv7l.AppImage
+
+cd
+cd lunarassets
+wget https://github.com/gl91306/lunar/raw/master/lunarclient.png
+cd
+
+echo "Creating a desktop entry for Lunar-Client..."
+echo "[Desktop Entry]
+Name=Lunar Client
+Comment=Lunar Client for ARMv7l made by PiKATchu
+Exec=$HOME/.local/lunarclient-3.0.3-armv7l.AppImage --no-sandbox
+Icon=$HOME/.local/lunarassets/lunarclient.png
+Categories=Game;
+Type=Application
+Terminal=false" > "$HOME/.local/share/applications/Lunar-Client.desktop"
+
+echo "Installation complete"
