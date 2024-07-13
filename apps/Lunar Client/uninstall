@@ -1,0 +1,3 @@
+rm -r "$HOME/.local/share/applications/Lunar-Client.desktop"
+rm -r "$HOME/Desktop/Lunar Client"
+rm -r $HOME/lunarclient-3.0.3-armv7l.AppImage

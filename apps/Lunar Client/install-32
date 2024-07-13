@@ -1,0 +1,1 @@
+wget -qO- https://raw.githubusercontent.com/gl91306/lunar/master/install.sh | bash
