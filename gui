@@ -285,7 +285,7 @@ show_app_store() {
 
     selected_category_raw=$(GTK_THEME="${theme}" yad --text "$random_announcement" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="3" \
         "${list_items[@]}" \
-        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search'" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
+        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search'" --button "!images/button/update.png"!"Updates":"bash -c './update'" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
     exval=$?
     selected_category="${selected_category_raw//|/}"
 
