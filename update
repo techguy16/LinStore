@@ -45,11 +45,11 @@ check_for_updates() {
 
     # Show results in Yad
     if [ ${#updates[@]} -eq 0 ]; then
-        yad --info --title="Update Check" --text="All apps are up to date!" --width=300
+        yad --info --title="LinStore Updates" --text="All apps are up to date!" --width=320 --height=600
     else
         # Prepare the list format for Yad
-        yad --list --title="Apps Needing Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --width=400 --height=300
+        yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
+            "${updates[@]}" --checklist --width=600 --height=320
     fi
 }
 

@@ -1,2 +1,2 @@
 VERSION=1.3.0
-install_package https://github.com/openstreamorg/openstreammusic/releases/download/v1.3.0/openstreammusic_${VERSION}_$(dpkg --print-architecture).deb
+install_package https://github.com/openstreamorg/openstreammusic/releases/download/v${VERSION}/openstreammusic_${VERSION}_$(dpkg --print-architecture).deb
