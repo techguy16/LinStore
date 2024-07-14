@@ -10,8 +10,8 @@ then
 fi
 sudo modprobe fuse
 
-mkdir ~/.local
-cd ~/.local
+mkdir $HOME/.local
+cd $HOME/.local
 
 echo "Downloading split files"
 wget https://github.com/gl91306/lunar/raw/master/lunarclient-3.0.3-armv7l.AppImage.1
@@ -20,18 +20,14 @@ wget https://github.com/gl91306/lunar/raw/master/lunarclient-3.0.3-armv7l.AppIma
 echo "Combining split files"
 cat lunarclient-3.0.3-armv7l.AppImage.* > lunarclient-3.0.3-armv7l.AppImage
 rm -rf lunarclient-3.0.3-armv7l.AppImage.*
-cd
-mkdir ~/.local/lunarassets
-cd
+mkdir $HOME/.local/lunarassets
 
-chmod +x $HOME/lunarclient-3.0.3-armv7l.AppImage
+chmod +x $HOME/.local/lunarclient-3.0.3-armv7l.AppImage
 
-cd
 cd lunarassets
 wget https://github.com/gl91306/lunar/raw/master/lunarclient.png
-cd
 
-echo "Creating a desktop entry for Lunar-Client..."
+echo "Creating a desktop entry for Lunar Client..."
 echo "[Desktop Entry]
 Name=Lunar Client
 Comment=Lunar Client for ARMv7l made by PiKATchu

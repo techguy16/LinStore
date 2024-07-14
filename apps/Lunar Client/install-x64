@@ -1,0 +1,27 @@
+#!/bin/bash
+VERSION=3.2.11
+
+mkdir $HOME/.local
+cd $HOME/.local
+
+echo "Downloading Lunar Client"
+wget https://launcherupdates.lunarclientcdn.com/Lunar%20Client-${VERSION}.AppImage -O $HOME/.local/LunarClient-${VERSION}.AppImage
+
+mkdir $HOME/.local/lunarassets
+
+chmod +x $HOME/.local/LunarClient-${VERSION}.AppImage
+
+cd lunarassets
+wget https://github.com/gl91306/lunar/raw/master/lunarclient.png
+
+echo "Creating a desktop entry for Lunar Client..."
+echo "[Desktop Entry]
+Name=Lunar Client
+Comment=Lunar Client for Minecraft
+Exec=$HOME/.local/LunarClient-${VERSION}.AppImage --no-sandbox
+Icon=$HOME/.local/lunarassets/lunarclient.png
+Categories=Game;
+Type=Application
+Terminal=false" > "$HOME/.local/share/applications/Lunar-Client.desktop"
+
+echo "Installation complete"
