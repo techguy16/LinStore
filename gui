@@ -146,7 +146,7 @@ app_details_page() {
         # 'install' script exists - Install for all architectures
         temp_script=$(mktemp)
         echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-        install_command="x-terminal-emulator -e 'bash -c \"sudo bash $temp_script\"'"
+        install_command="x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
     else
         architecture=$(cat "$HOME/.linstore/architecture.txt")
         install_script="install-$architecture"
@@ -155,12 +155,12 @@ app_details_page() {
             # Architecture-specific installation script exists - Install for the detected architecture
             temp_script=$(mktemp)
             echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-            install_command="x-terminal-emulator -e 'bash -c \"sudo bash $temp_script\"'"
+            install_command="x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
         else
             if [ -e "$app_directory/packages" ]; then
                 temp_script=$(mktemp)
                 echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-                install_command="x-terminal-emulator -e 'bash -c \"sudo bash $temp_script\"'"
+                install_command="x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
             else
                 install_command="echo 'Installation script not found for this architecture.'"
             fi
@@ -171,7 +171,7 @@ app_details_page() {
         # 'uninstall' script exists - Uninstall for all architectures
         temp_script=$(mktemp)
         echo "cd \"$app_directory\" && chmod +x uninstall && ./uninstall && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
-        uninstall_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+        uninstall_command="x-terminal-emulator -e \"sudo echo && bash $temp_script\""
     else
         architecture=$(cat "$HOME/.linstore/architecture.txt")
         uninstall_script="uninstall-$architecture"
@@ -180,12 +180,12 @@ app_details_page() {
             # Architecture-specific uninstallation script exists - Uninstall for the detected architecture
             temp_script=$(mktemp)
             echo "cd \"$app_directory\" && chmod +x \"$uninstall_script\" && ./\"$uninstall_script\" && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
-            uninstall_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+            uninstall_command="x-terminal-emulator -e \"sudo echo && bash $temp_script\""
         else
             if [ -e "$app_directory/packages" ]; then
                 temp_script=$(mktemp)
                 echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
-                uninstall_command="x-terminal-emulator -e \"sudo bash $temp_script\""
+                uninstall_command="x-terminal-emulator -e \"sudo echo && bash $temp_script\""
             else
                 uninstall_command="echo 'Uninstallation script not found for this architecture.'"
             fi
