@@ -121,8 +121,8 @@ app_details_page() {
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
     x=$(echo "$pos" | cut -d' ' -f1)
     y=$(echo "$pos" | cut -d' ' -f2)
-    x2=$((x + 313)) # Adjust this value as needed to position the second dialog
-    y2=$((y - 82))  # Adjust this value as needed to position the second dialog
+    x2=$((x + 313))
+    y2=$((y - 82))
     echo $x2
     echo $y2
 
@@ -133,64 +133,9 @@ app_details_page() {
     local description=$(get_app_description "$selected_app_name")
     local creator=$(get_app_creator "$selected_app_name")
     local website=$(get_app_website "$selected_app_name")
-    local installed_file="$HOME/.linstore/installed"
-    local uninstalled_file="$HOME/.linstore/uninstalled"
-    local theme="your_theme_name_here" # Replace with your GTK theme name
-    local password
-    local sudo_prefix=""
 
-    log_file="$HOME/.linstore/install_log.txt"
-    mkdir -p ~/.linstore/installscripts
-
-    if [ -e "$app_directory/install" ]; then
-        # 'install' script exists - Install for all architectures
-        temp_script=$(mktemp)
-        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-        install_command="x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
-    else
-        architecture=$(cat "$HOME/.linstore/architecture.txt")
-        install_script="install-$architecture"
-
-        if [ -e "$app_directory/$install_script" ]; then
-            # Architecture-specific installation script exists - Install for the detected architecture
-            temp_script=$(mktemp)
-            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-            install_command="x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
-        else
-            if [ -e "$app_directory/packages" ]; then
-                temp_script=$(mktemp)
-                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-                install_command="x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
-            else
-                install_command="echo 'Installation script not found for this architecture.'"
-            fi
-        fi
-    fi
-
-    if [ -e "$app_directory/uninstall" ]; then
-        # 'uninstall' script exists - Uninstall for all architectures
-        temp_script=$(mktemp)
-        echo "cd \"$app_directory\" && chmod +x uninstall && ./uninstall && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
-        uninstall_command="x-terminal-emulator -e \"sudo echo && bash $temp_script\""
-    else
-        architecture=$(cat "$HOME/.linstore/architecture.txt")
-        uninstall_script="uninstall-$architecture"
-
-        if [ -e "$app_directory/$uninstall_script" ]; then
-            # Architecture-specific uninstallation script exists - Uninstall for the detected architecture
-            temp_script=$(mktemp)
-            echo "cd \"$app_directory\" && chmod +x \"$uninstall_script\" && ./\"$uninstall_script\" && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
-            uninstall_command="x-terminal-emulator -e \"sudo echo && bash $temp_script\""
-        else
-            if [ -e "$app_directory/packages" ]; then
-                temp_script=$(mktemp)
-                echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
-                uninstall_command="x-terminal-emulator -e \"sudo echo && bash $temp_script\""
-            else
-                uninstall_command="echo 'Uninstallation script not found for this architecture.'"
-            fi
-        fi
-    fi
+    local install_command=$(./api install "$app_directory" "$selected_app_name")
+    local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
 
     # Run yad command in the background without waiting for it to finish
     (

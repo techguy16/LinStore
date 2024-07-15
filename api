@@ -1,6 +1,62 @@
 #!/bin/bash
-# Not really an "API", but let's call it that.
 
+# Function to install an app
+install_app() {
+    local app_directory="$1"
+    local selected_app_name="$2"
+    local installed_file="$HOME/.linstore/installed"
+    local temp_script=$(mktemp)
+
+    if [ -e "$app_directory/install" ]; then
+        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+        echo "x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
+    else
+        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local install_script="install-$architecture"
+
+        if [ -e "$app_directory/$install_script" ]; then
+            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+            echo "x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
+        else
+            if [ -e "$app_directory/packages" ]; then
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+                echo "x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
+            else
+                echo "echo 'Installation script not found for this architecture.'"
+            fi
+        fi
+    fi
+}
+
+# Function to uninstall an app
+uninstall_app() {
+    local app_directory="$1"
+    local selected_app_name="$2"
+    local uninstalled_file="$HOME/.linstore/uninstalled"
+    local temp_script=$(mktemp)
+
+    if [ -e "$app_directory/uninstall" ]; then
+        echo "cd \"$app_directory\" && chmod +x uninstall && ./uninstall && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+        echo "x-terminal-emulator -e \"sudo echo && bash $temp_script\""
+    else
+        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local uninstall_script="uninstall-$architecture"
+
+        if [ -e "$app_directory/$uninstall_script" ]; then
+            echo "cd \"$app_directory\" && chmod +x \"$uninstall_script\" && ./\"$uninstall_script\" && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+            echo "x-terminal-emulator -e \"sudo echo && bash $temp_script\""
+        else
+            if [ -e "$app_directory/packages" ]; then
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$uninstalled_file\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+                echo "x-terminal-emulator -e \"sudo echo && bash $temp_script\""
+            else
+                echo "echo 'Uninstallation script not found for this architecture.'"
+            fi
+        fi
+    fi
+}
+
+# Function to search for apps
 search_apps() {
     query=$(GTK_THEME="${theme}" yad --title="Search Apps" --text="Enter app name:" --entry)
     if [ -n "$query" ]; then
@@ -31,6 +87,11 @@ search_apps() {
     fi
 }
 
+# Main logic to handle command line arguments
 if [[ $1 == "search" ]]; then
     search_apps
+elif [[ $1 == "install" ]]; then
+    install_app "$2" "$3"
+elif [[ $1 == "uninstall" ]]; then
+    uninstall_app "$2" "$3"
 fi

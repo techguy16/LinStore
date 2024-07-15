@@ -1,6 +1,7 @@
 #!/bin/bash
 
 check_for_updates() {
+    pkill -f "yad.*"
     local repository_path="./apps"
     local installed_scripts_path="$HOME/.linstore/installscripts"
     local updates=()
@@ -23,7 +24,7 @@ check_for_updates() {
             needs_update=true
             for repo_script in "$app_directory"/*; do
                 if [ -e "$repo_script" ]; then
-                    if diff -q "$installed_script" "$repo_script" > /dev/null; then
+                    if diff -q "$installed_script" "$repo_script" >/dev/null; then
                         needs_update=false
                         break
                     fi
@@ -31,26 +32,38 @@ check_for_updates() {
             done
 
             if $needs_update; then
-                icon_path="$app_directory/icon-16.png"  # Fixed icon path
+                icon_path="$app_directory/icon-16.png" # Fixed icon path
                 if [ -e "$icon_path" ]; then
                     updates+=(TRUE "$icon_path" "$app_name")
                 else
-                    updates+=(TRUE "" "$app_name")  # No icon found, keep structure
+                    updates+=(TRUE "" "$app_name") # No icon found, keep structure
                 fi
             fi
         else
-            updates+=(FALSE "" "$app_name (No directory found)")  # Indicate missing directory
+            updates+=(FALSE "" "$app_name (No directory found)") # Indicate missing directory
         fi
     done
 
     # Show results in Yad
     if [ ${#updates[@]} -eq 0 ]; then
-        yad --info --title="LinStore Updates" --text="All apps are up to date!" --width=320 --height=600
+        yad --info --title="LinStore Updates" --text="All apps are up to date!" --width=450 --height=600
     else
         # Prepare the list format for Yad
-        yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --width=600 --height=320
+        updates=$(yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
+            "${updates[@]}" --checklist --width=450 --height=600)
+        while IFS= read -r line; do
+            # Check if the line starts with TRUE
+            if [[ "$line" == TRUE* ]]; then
+                # Extract the app name (second field)
+                app_name=$(echo "$line" | cut -d '|' -f 3)
+                local app_directory="apps/$app_name"
+                install=$(./api install "$app_directory" "$app_name")
+                yad --text "$install"
+                bash -c "${install}"
+            fi
+        done <<<"$updates"
     fi
+    ./gui
 }
 
 # Call the function
