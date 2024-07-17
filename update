@@ -8,12 +8,26 @@ check_for_updates() {
 
     mkdir -p "$installed_scripts_path"
 
-    echo "Checking for updates..."
-    rm -rf ~/.linstore/tmp
-    git clone https://github.com/techguy16/linstore ~/.linstore/tmp
-    rm -rf ./apps
-    mv ~/.linstore/tmp/apps ./apps
-    rm -rf ~/.linstore/tmp
+    # Show progress dialog
+    (
+        echo "# Checking for updates"
+        sleep 1 # Simulate initial delay
+
+        # Clean up previous installation
+        rm -rf ~/.linstore/tmp
+        echo "# Cloning repository"
+        git clone https://github.com/techguy16/linstore ~/.linstore/tmp
+        sleep 1 # Simulate time taken to clone
+
+        echo "# Moving apps"
+        rm -rf ./apps
+        mv ~/.linstore/tmp/apps ./apps
+        sleep 1 # Simulate time taken for moving
+
+        # Clean up
+        rm -rf ~/.linstore/tmp
+        echo "# Finished"
+    ) | yad --text "Checking for updates" --progress --pulsate --width=300 --enable-log="Log" --auto-kill --auto-close
 
     for installed_script in "$installed_scripts_path"/*; do
         app_name=$(basename "$installed_script")
@@ -45,20 +59,22 @@ check_for_updates() {
     done
 
     if [ ${#updates[@]} -eq 0 ]; then
+        pkill -f "yad.*"
         yad --info --title="LinStore Updates" --text="All apps are up to date!" --width=450 --height=600
     else
+        pkill -f "yad.*"
         updates_list=$(yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
             "${updates[@]}" --checklist --width=450 --height=600 --button="Update Selected:0" --hide-header)
 
         response=$?
 
         if [ $response -eq 0 ]; then
-            IFS=$'\n' read -d '' -r -a selected_apps <<< "$updates_list"
+            IFS=$'\n' read -d '' -r -a selected_apps <<<"$updates_list"
 
             for selected in "${selected_apps[@]}"; do
                 if [[ "$selected" == TRUE* ]]; then
                     app_name=$(echo "$selected" | cut -d '|' -f 3)
-                    echo "Updating selected: $app_name"  # Debug: selected app being updated
+                    echo "Updating selected: $app_name" # Debug: selected app being updated
                     app_directory="$repository_path/$app_name"
                     install=$(./api install "$app_directory" "$app_name")
                     bash -c "${install}"
