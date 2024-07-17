@@ -9,6 +9,11 @@ check_for_updates() {
     mkdir -p "$installed_scripts_path"
 
     echo "Checking for updates..."
+    rm -rf ~/.linstore/tmp
+    git clone https://github.com/techguy16/linstore ~/.linstore/tmp
+    rm -rf ./apps
+    mv ~/.linstore/tmp/apps ./apps
+    rm -rf ~/.linstore/tmp
 
     for installed_script in "$installed_scripts_path"/*; do
         app_name=$(basename "$installed_script")
@@ -19,49 +24,47 @@ check_for_updates() {
         fi
 
         app_directory="$repository_path/$app_name"
+        app_script=$(./api whatscript "$app_directory" "$app_name")
+        script="$app_directory/$app_script"
 
         if [ -d "$app_directory" ]; then
             needs_update=true
-            for repo_script in "$app_directory"/*; do
-                if [ -e "$repo_script" ]; then
-                    if diff -q "$installed_script" "$repo_script" >/dev/null; then
-                        needs_update=false
-                        break
-                    fi
-                fi
-            done
-
-            if $needs_update; then
-                icon_path="$app_directory/icon-16.png" # Fixed icon path
-                if [ -e "$icon_path" ]; then
-                    updates+=(TRUE "$icon_path" "$app_name")
-                else
-                    updates+=(TRUE "" "$app_name") # No icon found, keep structure
+            if [ -e "$script" ]; then
+                if diff -q "$installed_script" "$script" >/dev/null; then
+                    needs_update=false
                 fi
             fi
+
+            if $needs_update; then
+                icon_path="$app_directory/icon-16.png"
+                updates+=(TRUE "$icon_path" "$app_name")
+            fi
         else
-            updates+=(FALSE "" "$app_name (No directory found)") # Indicate missing directory
+            updates+=(FALSE "" "$app_name (No directory found)")
         fi
     done
 
-    # Show results in Yad
     if [ ${#updates[@]} -eq 0 ]; then
         yad --info --title="LinStore Updates" --text="All apps are up to date!" --width=450 --height=600
     else
-        # Prepare the list format for Yad
-        updates=$(yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --width=450 --height=600)
-        while IFS= read -r line; do
-            # Check if the line starts with TRUE
-            if [[ "$line" == TRUE* ]]; then
-                # Extract the app name (second field)
-                app_name=$(echo "$line" | cut -d '|' -f 3)
-                local app_directory="apps/$app_name"
-                install=$(./api install "$app_directory" "$app_name")
-                yad --text "$install"
-                bash -c "${install}"
-            fi
-        done <<<"$updates"
+        updates_list=$(yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
+            "${updates[@]}" --checklist --width=450 --height=600 --button="Update Selected:0" --hide-header)
+
+        response=$?
+
+        if [ $response -eq 0 ]; then
+            IFS=$'\n' read -d '' -r -a selected_apps <<< "$updates_list"
+
+            for selected in "${selected_apps[@]}"; do
+                if [[ "$selected" == TRUE* ]]; then
+                    app_name=$(echo "$selected" | cut -d '|' -f 3)
+                    echo "Updating selected: $app_name"  # Debug: selected app being updated
+                    app_directory="$repository_path/$app_name"
+                    install=$(./api install "$app_directory" "$app_name")
+                    bash -c "${install}"
+                fi
+            done
+        fi
     fi
     ./gui
 }
