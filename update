@@ -11,23 +11,23 @@ check_for_updates() {
     # Show progress dialog
     (
         echo "# Checking for updates"
-        sleep 1 # Simulate initial delay
+        sleep 1
 
         # Clean up previous installation
         rm -rf ~/.linstore/tmp
         echo "# Cloning repository"
         git clone https://github.com/techguy16/linstore ~/.linstore/tmp
-        sleep 1 # Simulate time taken to clone
+        sleep 1
 
         echo "# Moving apps"
         rm -rf ./apps
         mv ~/.linstore/tmp/apps ./apps
-        sleep 1 # Simulate time taken for moving
+        sleep 1
 
         # Clean up
         rm -rf ~/.linstore/tmp
         echo "# Finished"
-    ) | yad --text "Checking for updates" --progress --pulsate --width=300 --enable-log="Log" --auto-kill --auto-close
+    ) | yad --title "Checking for Updates" --text "Checking for updates" --progress --pulsate --width=300 --enable-log="Log" --auto-kill --auto-close --no-buttons
 
     for installed_script in "$installed_scripts_path"/*; do
         app_name=$(basename "$installed_script")
