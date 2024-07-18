@@ -117,6 +117,7 @@ theme_get() {
 theme=$(theme_get)
 
 app_details_page() {
+    sleep 0.1
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
     x=$(echo "$pos" | cut -d' ' -f1)
     y=$(echo "$pos" | cut -d' ' -f2)
@@ -258,3 +259,4 @@ else
     detect_and_write_architecture
     show_app_store
 fi
+pkill -f "yad*"
