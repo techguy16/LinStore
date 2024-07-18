@@ -117,7 +117,6 @@ theme_get() {
 theme=$(theme_get)
 
 app_details_page() {
-    sleep 0.1
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
     x=$(echo "$pos" | cut -d' ' -f1)
     y=$(echo "$pos" | cut -d' ' -f2)
@@ -125,6 +124,10 @@ app_details_page() {
     y2=$((y - 82))
     echo $x2
     echo $y2
+    TITLE="App Details"
+    wmctrl -l | grep "$TITLE" | awk '{print $1}' | while read -r window_id; do
+        wmctrl -ic "$window_id"
+    done
 
     local selected_app_name="${1//|/}"
     local app_directory="apps/$selected_app_name"
@@ -139,10 +142,10 @@ app_details_page() {
 
     # Run yad command in the background without waiting for it to finish
     (
-        yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --close-on-unfocus --form \
+        yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            --button="Install":"$install_command" --button="Uninstall":"$uninstall_command"
+            --button="Install":"$install_command" --button="Uninstall":"$uninstall_command" --skip-taskbar
     )
 
     # Cleanup temporary files
