@@ -122,8 +122,12 @@ app_details_page() {
     y=$(echo "$pos" | cut -d' ' -f2)
     x2=$((x + 313))
     y2=$((y - 82))
-    echo $x2
-    echo $y2
+    if [ -e "$HOME/.linstore/installscripts/${1//|/}" ]; then
+        installed="true"
+    else
+        installed="false"
+    fi
+
     TITLE="App Details"
     wmctrl -l | grep "$TITLE" | awk '{print $1}' | while read -r window_id; do
         wmctrl -ic "$window_id"
@@ -132,7 +136,6 @@ app_details_page() {
     local selected_app_name="${1//|/}"
     local app_directory="apps/$selected_app_name"
     local app_icon="$app_directory/icon-48.png"
-    echo $app_directory
     local description=$(get_app_description "$selected_app_name")
     local creator=$(get_app_creator "$selected_app_name")
     local website=$(get_app_website "$selected_app_name")
@@ -140,12 +143,17 @@ app_details_page() {
     local install_command=$(./api install "$app_directory" "$selected_app_name")
     local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
 
+    if [[ "$installed" == "true" ]]; then
+        buttons="--button=Uninstall!images/button/uninstall.png!:\"$uninstall_command\""
+    else
+        buttons="--button=Install!images/button/install.png!:\"$install_command\""
+    fi
     # Run yad command in the background without waiting for it to finish
     (
         yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            --button="Install":"$install_command" --button="Uninstall":"$uninstall_command" --skip-taskbar
+            $buttons --skip-taskbar
     )
 
     # Cleanup temporary files
@@ -182,8 +190,8 @@ show_apps_in_category() {
 
             GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "All Apps Category" --column "Icon:IMG" --column "Apps" \
-                --button="!images/button/back.png!Back:4" --separator="\n" "${all_apps_list[@]}" --no-headers \
-                --select-action='bash -c "./gui showdetails \"%s\""'
+                --button="Back"!images/button/back.png!:4 --separator="\n" "${all_apps_list[@]}" --no-headers \
+                --dclick-action='bash -c "./gui showdetails \"%s\""'
         else
             apps_in_category="${category_apps["$1"]}"
             formatted_apps=()
@@ -197,7 +205,7 @@ show_apps_in_category() {
 
             GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$1 Category" --column "Icon:IMG" --column "Apps" \
-                --button="!images/button/back.png!Back:4" --separator="\n" "${formatted_apps[@]}" --no-headers \
+                --button="Back"!images/button/back.png!:4 --separator="\n" "${formatted_apps[@]}" --no-headers \
                 --dclick-action='bash -c "./gui showdetails \"%s\""'
         fi
 
