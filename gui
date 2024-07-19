@@ -145,20 +145,24 @@ app_details_page() {
     local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
 
     if [[ "$installed" == "true" ]]; then
-        buttons="--button=Uninstall!images/button/uninstall.png!:\"$uninstall_command\""
+        buttonText="Uninstall"
+        buttonImage="images/button/uninstall.png"
+        buttonCommand="$uninstall_command"
     else
-        buttons="--button=Install!images/button/install.png!:\"$install_command\""
+        buttonText="Install"
+        buttonImage="images/button/install.png"
+        buttonCommand="$install_command"
     fi
-    # Run yad command in the background without waiting for it to finish
+
     (
         yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            $buttons --skip-taskbar
+            --button=$buttonText!$buttonImage:"$buttonCommand" --skip-taskbar
     )
 
-    # Cleanup temporary files
     rm -f /tmp/description.tmp
+    kill $(pgrep -f "title=App Details")
 }
 
 show_categories() {
@@ -259,4 +263,3 @@ else
     detect_and_write_architecture
     show_app_store
 fi
-pkill -f "yad*"
