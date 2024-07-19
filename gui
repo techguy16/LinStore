@@ -19,9 +19,6 @@ horizontal=$(echo $resolution | cut -d'x' -f1)
 vertical=$(echo $resolution | cut -d'x' -f2)
 let "categoryPos=$horizontal/2-360"
 let "categoryPosY=$vertical/2-340"
-echo "Main screen resolution: ${horizontal}x${vertical}"
-echo "Horizontal resolution: $horizontal"
-echo "Vertical resolution: $vertical"
 
 declare -A categories
 declare -A category_apps
