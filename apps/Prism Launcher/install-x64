@@ -1,0 +1,27 @@
+#!/bin/bash
+VERSION=8.4
+
+mkdir $HOME/.local
+cd $HOME/.local
+
+echo "Downloading Prism Launcher"
+wget https://github.com/PrismLauncher/PrismLauncher/releases/download/${VERSION}/PrismLauncher-Linux-x86_64.AppImage -O $HOME/.local/PrismLauncher-${VERSION}.AppImage
+
+mkdir $HOME/.local/prismassets
+
+chmod +x $HOME/.local/PrismLauncher-${VERSION}.AppImage
+
+cd lunarassets
+wget "https://avatars.githubusercontent.com/u/116031705?s=200&v=4" -O $HOME/.local/prismassets/prismlauncher.png
+
+echo "Creating a desktop entry for Prism Launcher..."
+echo "[Desktop Entry]
+Name=Prism Launcher
+Comment=Prism Launcher for Minecraft
+Exec=$HOME/.local/PrismLauncher-${VERSION}.AppImage
+Icon=$HOME/.local/prismassets/prismlauncher.png
+Categories=Game;
+Type=Application
+Terminal=false" > "$HOME/.local/share/applications/Prism-Launcher.desktop"
+
+echo "Installation complete"
