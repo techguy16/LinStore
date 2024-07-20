@@ -126,12 +126,9 @@ theme=$(theme_get)
 app_details_page() {
     sleep 0.1
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
-    #x=$(echo "$pos" | cut -d' ' -f1)
-    #y=$(echo "$pos" | cut -d' ' -f2)
-    #x2=$((x + 313))
-    #y2=$((y - 82))
     x2=$((horizontal / 2 - 40))
     y2=$((vertical / 2 - 340))
+    
     if [ -e "$HOME/.linstore/installscripts/${1//|/}" ]; then
         installed="true"
     else
@@ -156,7 +153,11 @@ app_details_page() {
     if [[ "$installed" == "true" ]]; then
         buttonText="Uninstall"
         buttonImage="images/button/uninstall.png"
-        buttonCommand="$uninstall_command"
+        # Create a temporary script for the commands
+        temp_script=$(mktemp)
+        echo "$uninstall_command && rm -rf \"$HOME/.linstore/installscripts/$selected_app_name\"" > "$temp_script"
+        chmod +x "$temp_script"
+        buttonCommand="bash -c 'bash $temp_script; rm $temp_script'"
     else
         buttonText="Install"
         buttonImage="images/button/install.png"
@@ -167,7 +168,7 @@ app_details_page() {
         yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            --button=$buttonText!$buttonImage:"$buttonCommand" --skip-taskbar
+            --button="$buttonText!$buttonImage:$buttonCommand" --skip-taskbar
     )
 
     rm -f /tmp/description.tmp
