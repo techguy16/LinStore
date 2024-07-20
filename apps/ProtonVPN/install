@@ -1,0 +1,3 @@
+VERSION="1.0.3-3"
+install_package https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_${VERSION}_all.deb
+install_package protonvpn
