@@ -178,6 +178,7 @@ app_details_page() {
     local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
 
     if [[ "$installed" == "true" ]]; then
+        displayName="<b>${selected_app_name}</b> (<i>installed</i>)"
         buttonText="Uninstall"
         buttonImage="images/button/uninstall.png"
         # Create a temporary script for the commands
@@ -186,6 +187,7 @@ app_details_page() {
         chmod +x "$temp_script"
         buttonCommand="bash -c 'bash $temp_script; rm $temp_script'"
     else
+        displayName="<b>${selected_app_name}</b> (<i>not installed</i>)"
         buttonText="Install"
         buttonImage="images/button/install.png"
         buttonCommand="$install_command"
@@ -199,7 +201,7 @@ app_details_page() {
 
     (
         yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
-            --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n${donate}" \
+            --text "<big>${displayName}</big>\nBy <b>${creator}</b> (<a href='${website}'>App Website</a>)\n${donate}" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
             --button="$buttonText!$buttonImage:$buttonCommand" --skip-taskbar
     )
