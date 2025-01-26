@@ -1,7 +1,9 @@
-# Support Pi-Apps!!!!!!!
+# Support Botspot
 The creator of Pi-Apps, Botspot, is going through some tough times right now and you really should support him!
 
 You can donate to him [here](https://github.com/sponsors/Botspot).
+
+--------
 
 # LinStore
 The fastest and lightest app store for Linux.
