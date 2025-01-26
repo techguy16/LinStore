@@ -164,9 +164,15 @@ app_details_page() {
         buttonCommand="$install_command"
     fi
 
+    if [[ -f "$app_directory/donate" ]]; then
+        donate="Help out the developer by <a href='$(cat $app_directory/donate)'>donating</a>!\n"
+    else
+        donate=""
+    fi
+
     (
         yad --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
-            --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n" \
+            --text "<big><b>${selected_app_name}</b></big>\n<b>${creator}</b>\n<b><a href='${website}'>${website}</a></b>\n${donate}" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
             --button="$buttonText!$buttonImage:$buttonCommand" --skip-taskbar
     )
