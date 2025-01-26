@@ -51,26 +51,31 @@ read_categories() {
 
     for app_dir in apps/*; do
         app_name=$(basename "$app_dir")
+
+        if [ ! -e "apps/$app_name/category" ]; then
+            escaped_app_name=$(echo "$app_name" | sed 's/([\/.^$*+?|{}\[])/\\&/g')
+            data=$(grep -E "$escaped_app_name" etc/piapps-categories | awk -F"|" '{print $2}')
+            if [ -n "$data" ]; then
+                data2=$(grep -E "$data" etc/mapping | awk -F"|" '{print $2}')
+                if [ -n "$data2" ]; then
+                    echo "$data2" > "apps/$app_name/category"
+                    category_file="apps/$app_name/category"
+                else
+                    continue
+                fi
+            else
+                continue
+            fi
+        fi
+
         category_file="apps/$app_name/category"
         install_script="$app_dir/install"
 
         # Check if the install script or architecture-specific install scripts exist for this app
         if [ -e "$install_script" ]; then
             while IFS= read -r app_in_category; do
-                if [ -n "${categories[$app_in_category]}" ]; then
-                    categories["$app_in_category"]+=" $app_name"
-                    category_apps["$app_in_category"]+="|$app_name"
-                else
-                    categories["$app_in_category"]="$app_name"
-                    category_apps["$app_in_category"]="$app_name"
-                fi
-            done <"$category_file"
-        else
-            architecture=$(cat ~/.linstore/architecture.txt)
-            install_script_arch="install-$architecture"
-
-            if [ -e "$app_dir/$install_script_arch" ]; then
-                while IFS= read -r app_in_category; do
+                # Make sure $app_in_category is not empty before accessing the array
+                if [ -n "$app_in_category" ]; then
                     if [ -n "${categories[$app_in_category]}" ]; then
                         categories["$app_in_category"]+=" $app_name"
                         category_apps["$app_in_category"]+="|$app_name"
@@ -78,11 +83,32 @@ read_categories() {
                         categories["$app_in_category"]="$app_name"
                         category_apps["$app_in_category"]="$app_name"
                     fi
+                fi
+                break
+            done <"$category_file"
+        else
+            architecture=$(cat ~/.linstore/architecture.txt)
+            install_script_arch="install-$architecture"
+
+            if [ -e "$app_dir/$install_script_arch" ]; then
+                while IFS= read -r app_in_category; do
+                    # Make sure $app_in_category is not empty before accessing the array
+                    if [ -n "$app_in_category" ]; then
+                        if [ -n "${categories[$app_in_category]}" ]; then
+                            categories["$app_in_category"]+=" $app_name"
+                            category_apps["$app_in_category"]+="|$app_name"
+                        else
+                            categories["$app_in_category"]="$app_name"
+                            category_apps["$app_in_category"]="$app_name"
+                        fi
+                    fi
+                    break
                 done <"$category_file"
             fi
         fi
     done
 }
+
 
 get_app_description() {
     app_name="$1"
@@ -124,11 +150,12 @@ theme_get() {
 theme=$(theme_get)
 
 app_details_page() {
+    kill $(pgrep -f "title=App Details")
     sleep 0.1
     pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
     x2=$((horizontal / 2 - 40))
     y2=$((vertical / 2 - 340))
-    
+
     if [ -e "$HOME/.linstore/installscripts/${1//|/}" ]; then
         installed="true"
     else
@@ -155,7 +182,7 @@ app_details_page() {
         buttonImage="images/button/uninstall.png"
         # Create a temporary script for the commands
         temp_script=$(mktemp)
-        echo "$uninstall_command && rm -rf \"$HOME/.linstore/installscripts/$selected_app_name\"" > "$temp_script"
+        echo "$uninstall_command && rm -rf \"$HOME/.linstore/installscripts/$selected_app_name\"" >"$temp_script"
         chmod +x "$temp_script"
         buttonCommand="bash -c 'bash $temp_script; rm $temp_script'"
     else
@@ -178,7 +205,6 @@ app_details_page() {
     )
 
     rm -f /tmp/description.tmp
-    kill $(pgrep -f "title=App Details")
 }
 
 show_categories() {
@@ -227,7 +253,7 @@ show_apps_in_category() {
             GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$1 Category" --column "Icon:IMG" --column "Apps" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" "${formatted_apps[@]}" --no-headers \
-                --dclick-action='bash -c "./gui showdetails \"%s\""'
+                --select-action='bash -c "./gui showdetails \"%s\""'
         fi
 
         button_clicked=$?
@@ -277,7 +303,11 @@ show_app_store() {
 }
 
 if [[ $1 == "showdetails" ]]; then
-    app_details_page "$(echo $2 | awk -F"'" '{print $4}')"
+    if [ -e /tmp/tmpname ]; then
+        app_details_page "$(cat /tmp/tmpname && rm -r /tmp/tmpname)"
+    else
+        app_details_page "$(echo $2 | awk -F"'" '{print $4}')"
+    fi
 else
     detect_and_write_architecture
     show_app_store

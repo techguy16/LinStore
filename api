@@ -130,7 +130,8 @@ search_apps() {
         if [ ${#apps_found[@]} -gt 0 ]; then
             selected_category2=$(GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10)
             if [ -n "$selected_category2" ]; then
-                ./gui showdetails "${selected_category2}"
+                echo "$(echo ${selected_category2} | sed 's/|//g')" > /tmp/tmpname
+                ./gui showdetails
             fi
         else
             GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
