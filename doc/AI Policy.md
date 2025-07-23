@@ -6,5 +6,5 @@ If you want to be extra careful, only use AIs listed here that have the status o
 AI | Status | Why?
 ---|--------|-----
 ChatGPT | Working
-Bing | Avoid | Creates code that looks like it works but doesn't.
-Google Bard | Avoid | Creates code that looks like it works but doesn't.
+Copilot | Avoid | Creates code that looks like it works but doesn't.
+Google Gemini | Avoid | Creates code that looks like it works but doesn't.
