@@ -258,7 +258,7 @@ show_apps_in_category() {
             GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" "${all_apps_list[@]}" --no-headers \
-                --dclick-action='bash -c "./gui showdetails \"%s\""'
+                --select-action='bash -c "./gui showdetails \"%s\""'
         else
             apps_in_category="${category_apps["$1"]}"
             formatted_apps=()
