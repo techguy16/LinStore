@@ -50,22 +50,34 @@ detect_and_write_architecture() {
     esac
 }
 
+list_piapps() {
+    piapps_file="etc/pi-apps-import"
+    if [ -e "$piapps_file" ]; then
+        cat "$piapps_file"
+    else
+        echo ""
+    fi
+}
+use_piapps=$(list_piapps)
+echo "Is LinStore able to use Pi-Apps' library? ${use_piapps}"
+
+
 read_categories() {
     while read -r category; do
         categories["$category"]=""
     done <etc/categories
+    
+    for app_dir in "${1}"/*; do
+        app_name=$(basename "${app_dir}")
 
-    for app_dir in apps/*; do
-        app_name=$(basename "$app_dir")
-
-        if [ ! -e "apps/$app_name/category" ]; then
+        if [ ! -e "${1}/$app_name/category" ]; then
             escaped_app_name=$(echo "$app_name" | sed 's/([\/.^$*+?|{}\[])/\\&/g')
             data=$(grep -E "$escaped_app_name" etc/piapps-categories | awk -F"|" '{print $2}')
             if [ -n "$data" ]; then
                 data2=$(grep -E "$data" etc/mapping | awk -F"|" '{print $2}')
                 if [ -n "$data2" ]; then
-                    echo "$data2" > "apps/$app_name/category"
-                    category_file="apps/$app_name/category"
+                    echo "$data2" > "${1}/$app_name/category"
+                    category_file="${1}/$app_name/category"
                 else
                     continue
                 fi
@@ -74,7 +86,7 @@ read_categories() {
             fi
         fi
 
-        category_file="apps/$app_name/category"
+        category_file="${1}/$app_name/category"
         install_script="$app_dir/install"
 
         # Check if the install script or architecture-specific install scripts exist for this app
@@ -158,7 +170,7 @@ theme=$(theme_get)
 app_details_page() {
     kill $(pgrep -f "title=App Details")
     sleep 0.1
-    pos=$(wmctrl -lG | grep "Category" | awk '{print $3,$4}')
+    pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
     x2=$((horizontal / 2 - 40))
     y2=$((vertical / 2 - 340))
 
@@ -244,7 +256,7 @@ show_apps_in_category() {
             done
 
             GTK_THEME="${theme}" yad --text "<big><b>$1</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "All Apps Category" --column "Icon:IMG" --column "Apps" \
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" "${all_apps_list[@]}" --no-headers \
                 --dclick-action='bash -c "./gui showdetails \"%s\""'
         else
@@ -259,7 +271,7 @@ show_apps_in_category() {
             done
 
             GTK_THEME="${theme}" yad --text "<big><b>Apps in $1 Category</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$1 Category" --column "Icon:IMG" --column "Apps" \
+                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" "${formatted_apps[@]}" --no-headers \
                 --select-action='bash -c "./gui showdetails \"%s\""'
         fi
@@ -276,7 +288,10 @@ show_apps_in_category() {
 }
 
 show_app_store() {
-    read_categories
+    read_categories "apps"
+    if [[ "$use_piapps" == "TRUE" ]]; then
+        read_categories "/home/${USER}/pi-apps/apps"
+    fi
 
     # Sort categories alphabetically and format with newlines
     sorted_categories=$(printf '%s\n' "${!categories[@]}" | sort)

@@ -30,33 +30,49 @@ show_settings() {
         theme_string+="$theme"
     done
     
-    selectededitor=$(cat "etc/editor")
-    #echo "$selectededitor"
+    selectededitor=$(cat "etc/editor" | sed -r 's/ \(currently selected\)//g')
+    echo "$selectededitor"
     if [[ -z "$selectededitor" || "$selectededitor" == " " ]]; then
         texteditors="System Default"
     else
         texteditors="${selectededitor} (currently selected)!System Default"
     fi
     texteditors+="!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium"
+
+    import_piapps_file=$(cat "etc/pi-apps-import")
+    #echo "$selectededitor"
+    if [[ -z "$import_piapps_file" || "$import_piapps_file" == " " ]]; then
+        import_piapps="FALSE"
+    else
+        import_piapps="${import_piapps_file}"
+    fi
     
     # I don't know why these are around this way, and why they only work that way.
     settings=$(yad --form \
         --title="Settings" --columns=1 --output-by-row \
-        --width="150" --height="400" --center --on-top --borders=20 \
+        --width="150" --height="400" --center --borders=20 \
+        --field="<b>LinStore Settings</b>":LBL "" \
         --field="Theme":CB "$theme_string" \
         --field="Text Editor":CB "$texteditors" \
+        --field="Show apps from Pi-Apps (if installed)":CHK "${import_piapps}" \
+        --field=":LBL" "" \
+        --field="<b>App Management</b>":LBL "" \
         --field="<b>Create App</b>"!gtk-new!"Create an app for LinStore and Pi-Apps!":FBTN "./createapp create" \
         --field="<b>Import App</b>"!gtk-open!"Import an app not available in the repository":FBTN "./createapp import" \
         --button="<b>OK</b>!gtk-ok":0 \
-    --button="<b>Cancel</b>!gtk-cancel":1)
+        --button="<b>Cancel</b>!gtk-cancel":1)
     
     # Extracting the selected text editor value from settings
     
     yad_ret=$?
     
     if [[ $yad_ret -eq 0 ]]; then
-        selected_text_editor=$(echo "$settings" | awk -F '|' '{print $2}')
+        echo "$settings"
+        fixed_settings=$(echo "$settings" | sed -r 's/ \(currently selected\)//g')
+        echo "$fixed_settings"
         
+        selected_text_editor=$(echo "$fixed_settings" | awk -F '|' '{print $3}')
+        echo "$selected_text_editor"
         # Echoing to the 'etc/editor' file based on the selected text editor
         case "$selected_text_editor" in
             "System Default") echo "xdg-open" >"etc/editor" ;;
@@ -67,25 +83,29 @@ show_settings() {
             "VSCodium") echo "codium" >"etc/editor" ;;
             *) echo "$selected_text_editor" >"etc/editor" ;;
         esac
-        selected_theme="${settings%%|*}"
+
+        selected_theme=$(echo "$fixed_settings" | awk -F '|' '{print $2}')
         echo $selected_theme
-        
         if [[ "$selected_theme" == "System Default" ]]; then
-            selected_theme_path=" "
+            echo "yes"
+            selected_theme_path=""
             echo "$selected_theme_path" >"$THEMES_FILE"
         else
             selected_theme_path=$(find "$THEMES_DIRECTORY" -maxdepth 1 -mindepth 1 -type d -name "$selected_theme" -exec basename {} \; -quit)
             echo "$selected_theme_path" >"$THEMES_FILE"
         fi
+
+        import_from_piapps=$(echo "$fixed_settings" | awk -F '|' '{print $4}')
+        echo $import_from_piapps
+        echo $import_from_piapps > "etc/pi-apps-import"
         
         ./gui
     elif [[ $yad_ret -eq 252 ]]; then
         ./gui
     elif [[ $yad_ret -eq 1 ]]; then
-        
         ./gui
     fi
 }
 
-show_settings >/dev/null
+show_settings
 #show_settings

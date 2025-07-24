@@ -1,7 +1,16 @@
 #!/bin/bash
 
+if [[ $(xrandr --current) =~ "connected primary" ]]; then
+    resolution=$(xrandr --current | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
+else
+    resolution=$(xrandr --current | grep " connected" | awk '{print $3}' | cut -d'+' -f1)
+fi
+
+horizontal=$(echo $resolution | cut -d'x' -f1)
+vertical=$(echo $resolution | cut -d'x' -f2)
+
 check_for_updates() {
-    pkill -f "yad.*"
+    #kill $(pgrep -f "title=App Details")
     local repository_path="./apps"
     local installed_scripts_path="$HOME/.linstore/installscripts"
     local updates=()
@@ -27,7 +36,7 @@ check_for_updates() {
         # Clean up
         rm -rf ~/.linstore/tmp
         echo "# Finished"
-    ) | yad --title "Checking for Updates" --text "Checking for updates" --progress --pulsate --width=300 --enable-log="Log" --auto-kill --auto-close --no-buttons
+    ) | yad --center --title "Checking for Updates" --text "Checking for updates" --progress --pulsate --width=300 --enable-log="Log" --auto-kill --auto-close --no-buttons
 
     for installed_script in "$installed_scripts_path"/*; do
         app_name=$(basename "$installed_script")
@@ -58,13 +67,16 @@ check_for_updates() {
         fi
     done
 
+    pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
+    x2=$((horizontal / 2 - 40))
+    y2=$((vertical / 2 - 340))
     if [ ${#updates[@]} -eq 0 ]; then
-        pkill -f "yad.*"
-        yad --info --title="LinStore Updates" --text="All apps are up to date!" --width=450 --height=600
+        kill $(pgrep -f "title=App Details")
+        yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2}
     else
-        pkill -f "yad.*"
+        kill $(pgrep -f "title=App Details")
         updates_list=$(yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --width=450 --height=600 --button="Update Selected:0" --hide-header)
+            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --button="Update Selected:0" --hide-header)
 
         response=$?
 
@@ -80,9 +92,9 @@ check_for_updates() {
                     bash -c "${install}"
                 fi
             done
+            ./update
         fi
     fi
-    ./gui
 }
 
 # Call the function

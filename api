@@ -1,5 +1,17 @@
 #!/bin/bash
 
+
+theme_get() {
+    website_file="etc/theme"
+    if [ -e "$website_file" ]; then
+        cat "$website_file"
+    else
+        echo ""
+    fi
+}
+theme=$(theme_get)
+
+
 # Function to install an app
 install_app() {
     local app_directory="$1"
@@ -81,7 +93,7 @@ uninstall_app() {
 
 # Function to search for apps
 search_apps() {
-    query=$(GTK_THEME="${theme}" yad --title="Search Apps" --text="Enter app name:" --entry)
+    query=$(GTK_THEME="${theme}" yad --title="Search Apps" --center --text="Enter query:" --entry)
     if [ -n "$query" ]; then
         app_list=$(ls -w 1 ./apps | awk 'BEGIN {ORS="\n"} {print}')
         num_apps=$(echo "$app_list" | wc -l)
@@ -100,13 +112,13 @@ search_apps() {
         done
 
         if [ ${#apps_found[@]} -gt 0 ]; then
-            selected_category2=$(GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10)
+            selected_category2=$(GTK_THEME="${theme}" yad --center --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10)
             if [ -n "$selected_category2" ]; then
                 echo "$(echo ${selected_category2} | sed 's/|//g')" > /tmp/tmpname
                 ./gui showdetails
             fi
         else
-            GTK_THEME="${theme}" yad --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
+            GTK_THEME="${theme}" yad --center --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
         fi
     fi
 }
