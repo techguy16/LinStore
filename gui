@@ -13,7 +13,13 @@ else
     cd ~/.linstore
 fi
 
-resolution=$(xrandr | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
+if [[ $(xrandr --current) =~ "connected primary" ]]; then
+    echo "Dual monitor setup, placing on primary monitor"
+    resolution=$(xrandr --current | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
+else
+    echo "Single monitor setup, no primary monitor"
+    resolution=$(xrandr --current | grep " connected" | awk '{print $3}' | cut -d'+' -f1)
+fi
 
 horizontal=$(echo $resolution | cut -d'x' -f1)
 vertical=$(echo $resolution | cut -d'x' -f2)

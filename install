@@ -1,6 +1,18 @@
 #!/bin/bash
 
-echo "Welcome to LinStore."
+clear
+echo """
+
+██╗░░░░░██╗███╗░░██╗░██████╗████████╗░█████╗░██████╗░███████╗
+██║░░░░░██║████╗░██║██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██╔════╝
+██║░░░░░██║██╔██╗██║╚█████╗░░░░██║░░░██║░░██║██████╔╝█████╗░░
+██║░░░░░██║██║╚████║░╚═══██╗░░░██║░░░██║░░██║██╔══██╗██╔══╝░░
+███████╗██║██║░╚███║██████╔╝░░░██║░░░╚█████╔╝██║░░██║███████╗
+╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝
+"""
+echo ""
+echo "Welcome to the LinStore installer!"
+echo ""
 
 # Check if git and yad are installed
 missing_dependencies=false
@@ -19,6 +31,19 @@ if ! command -v yad &>/dev/null; then
         sudo apt install yad
     else
         echo "YAD is required for LinStore installation. Exiting."
+        missing_dependencies=true
+    fi
+fi
+
+if ! command -v wmctrl &>/dev/null; then
+    echo "wmctrl is not installed."
+    read -rp "Do you want to install wmctrl? (Y/N): " choice
+    if [[ $choice =~ ^[Yy]$ ]]; then
+        echo "Installing wmctrl..."
+        sudo apt update
+        sudo apt install wmctrl
+    else
+        echo "wmctrl is required for LinStore installation. Exiting."
         missing_dependencies=true
     fi
 fi
