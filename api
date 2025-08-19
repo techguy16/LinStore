@@ -11,6 +11,8 @@ theme_get() {
 }
 theme=$(theme_get)
 
+logo() {
+}
 
 # Function to install an app
 install_app() {
@@ -132,4 +134,6 @@ elif [[ $1 == "whatscript" ]]; then
     installation_script "$2" "$3"
 elif [[ $1 == "uninstall" ]]; then
     uninstall_app "$2" "$3"
+elif [[ $1 == "logo" ]]; then
+    logo
 fi

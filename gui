@@ -68,7 +68,6 @@ list_piapps() {
 use_piapps=$(list_piapps)
 echo "Is LinStore able to use Pi-Apps' library? ${use_piapps}"
 
-
 read_categories() {
     while read -r category; do
         categories["$category"]=""
@@ -327,6 +326,10 @@ show_app_store() {
         ./api search && show_app_store
     elif [ -n "$selected_category" ]; then
         show_apps_in_category "$selected_category"
+    elif [ "$exval" -eq "143" ]; then
+        pkill -f "yad*"
+    elif [[ "$exval" =~ "252" ]]; then
+        pkill -f "yad*"
     elif [ "$exval" -eq "252" ]; then
         pkill -f "yad*"
     fi
