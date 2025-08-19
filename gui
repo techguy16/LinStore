@@ -225,7 +225,7 @@ app_details_page() {
     fi
 
     (
-        $YAD_COMMAND --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
+        GDK_BACKEND=x11 $YAD_COMMAND --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big>${displayName}</big>\nBy <b>${creator}</b> (<a href='${website}'>App Website</a>)\n${donate}" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
             --button="$buttonText!$buttonImage:$buttonCommand" --skip-taskbar
@@ -242,7 +242,7 @@ show_categories() {
         list_items+=("$category")
     done
 
-    selected_category_raw=$(GTK_THEME="${theme}" $YAD_COMMAND --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
+    selected_category_raw=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "Welcome to LinStore\nThe app store that's simple to use." --width="$APP_STORE_WIDTH" --height="$APP_STORE_HEIGHT" --columns="2" \
         "${list_items[@]}" \
         --list --image="images/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "Show Apps:3" --button "Settings:4" --item-padding="10")
 
@@ -262,7 +262,7 @@ show_apps_in_category() {
                 all_apps_list+=("$app_name")
             done
 
-            GTK_THEME="${theme}" $YAD_COMMAND --text "<big><b>$1</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
+            GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$1</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" "${all_apps_list[@]}" --no-headers \
                 --select-action='bash -c "./gui showdetails \"%s\""'
@@ -277,7 +277,7 @@ show_apps_in_category() {
                 formatted_apps+=("$app")
             done
 
-            GTK_THEME="${theme}" $YAD_COMMAND --text "<big><b>Apps in $1 Category</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
+            GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>Apps in $1 Category</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" "${formatted_apps[@]}" --no-headers \
                 --select-action='bash -c "./gui showdetails \"%s\""'
@@ -316,7 +316,7 @@ show_app_store() {
 
     # Search function
 
-    selected_category_raw=$(GTK_THEME="${theme}" $YAD_COMMAND --text "$random_announcement" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
+    selected_category_raw=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
         "${list_items[@]}" \
         --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search'" --button "!images/button/update.png"!"Updates":"bash -c './update'" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
     exval=$?

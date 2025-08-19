@@ -72,10 +72,10 @@ check_for_updates() {
     y2=$((vertical / 2 - 340))
     if [ ${#updates[@]} -eq 0 ]; then
         kill $(pgrep -f "title=App Details")
-        yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2}
+        GDK_BACKEND=x11 yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2}
     else
         kill $(pgrep -f "title=App Details")
-        updates_list=$(yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
+        updates_list=$(GDK_BACKEND=x11 yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
             "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --button="Update Selected:0" --hide-header)
 
         response=$?
