@@ -134,6 +134,13 @@ search_apps() {
     fi
 }
 
+error() {
+    echo -e "\033[1;41m\033[97m ERROR:\033[1;41m $1 \033[0m"
+}
+warning() {
+    echo -e "\033[1;43m\033[97m WARNING:\033[1;43m $1 \033[0m"
+}
+
 # Main logic to handle command line arguments
 if [[ $1 == "search" ]]; then
     search_apps
@@ -145,4 +152,8 @@ elif [[ $1 == "uninstall" ]]; then
     uninstall_app "$2" "$3"
 elif [[ $1 == "logo" ]]; then
     logo
+elif [[ $1 == "error" ]]; then
+    error $2
+elif [[ $1 == "warning" ]]; then
+    warning $2
 fi
