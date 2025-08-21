@@ -23,7 +23,7 @@ LinStore has support to install non-package apps from Pi-Apps (I'm sorry Botspot
 #### Is it lighter than Pi-Apps?
 Yes, it is. In my testing, LinStore uses 8.8MiB of memory, wheras Pi-Apps uses 9.8MiB of memory. It's not much, but the CPU usage is also less.
 
-| <img src="images/LinStoreResources.png" alt="LinStore's Resources" width="350"/> | <img src="images/Pi-AppsResources.png" alt="Pi-Apps Resources" width="350"/> |
+| <img src="images/screenshots/LinStoreResources.png" alt="LinStore's Resources" width="350"/> | <img src="images/screenshots/Pi-AppsResources.png" alt="Pi-Apps Resources" width="350"/> |
 |---|---|
 
 ## Supported distros
