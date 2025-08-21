@@ -58,6 +58,7 @@ temp_dir=$(mktemp -d) || {
 if [ -d "$HOME/.linstore/tmp" ]; then
     information "Using existing cloned files from update..."
     mv "$HOME/.linstore/tmp" "$temp_dir"
+    rm -rf "$HOME/.linstore/tmp"
 else
     information "Cloning necessary files from the repository..."
     if ! git clone https://github.com/techguy16/linstore "$temp_dir" > /dev/null 2>&1; then
@@ -76,11 +77,13 @@ chmod +x *
 rm -rf "$temp_dir"  # Clean up temporary directory
 
 # Create a bin directory if it doesn't exist
-sudo mkdir -p /usr/local/bin
 
-# Copy files to /usr/local/bin
-information "Copying executable files to /usr/local/bin..."
-sudo cp "$install_dir"/tools/*_package /usr/local/bin/
+if [ ! -e /usr/local/bin/install_package ]; then
+    sudo mkdir -p /usr/local/bin
+    # Copy files to /usr/local/bin
+    information "Copying executable files to /usr/local/bin..."
+    sudo cp "$install_dir"/tools/*_package /usr/local/bin/
+fi
 
 # Create a desktop shortcut for GUI
 desktop_file="$HOME/.local/share/applications/LinStore.desktop"
@@ -97,5 +100,8 @@ StartupWMClass=LinStore
 Icon=$HOME/.linstore/images/logo/logo.png
 Categories=Utility;System;PackageManager;
 EOF
+
+information "Cleaning up cached files..."
+rm -rf "$HOME/.linstore/tmp/"
 
 information "LinStore installed successfully!"
