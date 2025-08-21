@@ -6,11 +6,10 @@ THEMES_DIRECTORY="/usr/share/themes"
 THEMES_FILE="etc/theme"
 
 show_settings() {
-    chmod +x theme
     pkill -f "yad.*"
     
     selectedtheme=$(cat "etc/theme" 2>/dev/null)
-    if [[ ! -f "e./tc/theme" ]]; then
+    if [[ ! -f "etc/theme" ]]; then
         ./api error "etc/theme does not exist"
     fi
     #echo "$selectedtheme"
