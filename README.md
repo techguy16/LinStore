@@ -1,11 +1,5 @@
-# Support Botspot
-The creator of Pi-Apps, Botspot, is going through some tough times right now and you really should support him!
+<img src="hhttps://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/banner.png" alt="LinStore logo" style="text-align:center;">
 
-You can donate to him [here](https://github.com/sponsors/Botspot).
-
---------
-
-# LinStore
 The fastest and lightest app store for Linux.
 
 ## Install
