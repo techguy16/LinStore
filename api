@@ -134,7 +134,6 @@ update() {
     pkill -f "yad*"
     ./api info "Updating LinStore..."
     curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | bash
-    ./gui
 }
 
 buildinfo() {
