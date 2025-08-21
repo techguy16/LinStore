@@ -40,11 +40,11 @@ install_app() {
             if [ -e "$app_directory/packages" ]; then
                 echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
             else
-                echo "echo 'Installation script not found for this architecture.'"
+                echo "./api error 'Installation script not found for this architecture.'"
             fi
         fi
     fi
-    echo "x-terminal-emulator -e './api logo && echo \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
+    echo "x-terminal-emulator -e './api logo && ./api info \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
 }
 
 # Function to install an app
@@ -90,12 +90,12 @@ uninstall_app() {
             if [ -e "$app_directory/packages" ]; then
                 echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
             else
-                echo "echo 'Uninstallation script not found for this architecture.'" >"$temp_script"
+                echo "./api error 'Uninstallation script not found for this architecture.'" >"$temp_script"
             fi
         fi
     fi
 
-    echo "x-terminal-emulator -e './api logo && echo \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
+    echo "x-terminal-emulator -e './api logo && ./api info \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
 }
 
 # Function to search for apps
@@ -128,6 +128,13 @@ search_apps() {
             GTK_THEME="${theme}" yad --center --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
         fi
     fi
+}
+
+update() {
+    pkill -f "yad*"
+    ./api info "Updating LinStore..."
+    curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | bash
+    ./gui
 }
 
 buildinfo() {
@@ -163,4 +170,6 @@ elif [[ $1 == "info" ]]; then
     information "$2"
 elif [[ $1 == "buildinfo" ]]; then
     buildinfo
+elif [[ $1 == "update" ]]; then
+    update
 fi

@@ -25,18 +25,35 @@ check_for_updates() {
         # Clean up previous installation
         rm -rf ~/.linstore/tmp
         echo "# Cloning repository"
-        git clone https://github.com/techguy16/linstore ~/.linstore/tmp
+        git clone https://github.com/techguy16/linstore ~/.linstore/tmp > /dev/null 2>&1
         sleep 1
 
-        echo "# Moving apps"
+        echo "# Moving new app installation scripts"
         rm -rf ./apps
         mv ~/.linstore/tmp/apps ./apps
         sleep 1
 
         # Clean up
-        rm -rf ~/.linstore/tmp
+        # rm -rf ~/.linstore/tmp
         echo "# Finished"
-    ) | yad --center --title "Checking for Updates" --text "Checking for updates" --progress --pulsate --width=300 --enable-log="Log" --auto-kill --auto-close --no-buttons
+    ) | yad --center --title "Updater" --text "Checking for app updates" --progress --pulsate --width=300 --height=75 \
+        --enable-log="Log" --log-expanded --auto-kill --borders=10 --auto-close --no-buttons
+
+    # check for LinStore updates
+
+    local fileupdates=""
+    for file in gui api createapp settings update; do
+        if diff "./$file" "$HOME/.linstore/tmp/$file" > /dev/null 2>&1; then
+            ./api info "No updates available for $file"
+        else
+            ./api warning "Update available for $file"
+            fileupdates+="$file, "
+        fi
+    done
+
+    if [ "$fileupdates" != "" ]; then
+        updates+=(TRUE "images/logo/logo-16.png" "<b>LinStore</b> ($(echo $fileupdates | sed 's/[[:space:]]*$//'  | sed 's/,$//'))")
+    fi
 
     for installed_script in "$installed_scripts_path"/*; do
         app_name=$(basename "$installed_script")
@@ -71,10 +88,10 @@ check_for_updates() {
     x2=$((horizontal / 2 - 40))
     y2=$((vertical / 2 - 340))
     if [ ${#updates[@]} -eq 0 ]; then
-        kill $(pgrep -f "title=App Details")
+        kill $(pgrep -f "title=App Details") > /dev/null 2>&1
         GDK_BACKEND=x11 yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2}
     else
-        kill $(pgrep -f "title=App Details")
+        kill $(pgrep -f "title=App Details") > /dev/null 2>&1
         updates_list=$(GDK_BACKEND=x11 yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
             "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --button="Update Selected:0" --hide-header)
 
@@ -85,11 +102,17 @@ check_for_updates() {
 
             for selected in "${selected_apps[@]}"; do
                 if [[ "$selected" == TRUE* ]]; then
-                    app_name=$(echo "$selected" | cut -d '|' -f 3)
-                    echo "Updating selected: $app_name" # Debug: selected app being updated
-                    app_directory="$repository_path/$app_name"
-                    install=$(./api install "$app_directory" "$app_name")
-                    bash -c "${install}"
+                    app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
+                    echo "Updating selected: $app_name"
+                    if [[ "$(echo $app_name | awk -F" " '{print $1}')" == "LinStore" ]]; then
+                        ./api info "Updating LinStore"
+                        ./api update
+                    else
+                        ./api info "Updating app: $app_name"
+                        app_directory="$repository_path/$app_name"
+                        install=$(./api install "$app_directory" "$app_name")
+                        bash -c "${install}"
+                    fi
                 fi
             done
             ./update
