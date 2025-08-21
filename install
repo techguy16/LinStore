@@ -10,7 +10,10 @@ echo """
 ╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝"""
 echo "Welcome to the LinStore installer!"
 echo ""
-sudo echo
+
+if [ ! -e /usr/local/bin/install_package ]; then
+    sudo echo
+fi
 
 # Check if git and yad are installed
 missing_dependencies=false
@@ -52,11 +55,16 @@ temp_dir=$(mktemp -d) || {
     exit 1
 }
 
-information "Cloning necessary files from the repository..."
-if ! git clone https://github.com/techguy16/linstore "$temp_dir" > /dev/null 2>&1; then
-    error "Failed to clone repository. Exiting installation."
-    rm -rf "$temp_dir"
-    exit 1
+if [ -d "$HOME/.linstore/tmp" ]; then
+    information "Using existing cloned files from update..."
+    mv "$HOME/.linstore/tmp" "$temp_dir"
+else
+    information "Cloning necessary files from the repository..."
+    if ! git clone https://github.com/techguy16/linstore "$temp_dir" > /dev/null 2>&1; then
+        error "Failed to clone repository. Exiting installation."
+        rm -rf "$temp_dir"
+        exit 1
+    fi
 fi
 
 information "Copying files to the installation directory..."
