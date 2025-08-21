@@ -27,11 +27,10 @@ select_category_pane() {
         --list --column="Icon:IMG" --column="Categories" --column="Description" --no-headers \
         --button="<b>Cancel</b>!gtk-cancel":1 \
     --button="<b>Next</b>!go-next":0 | awk -F '|' '{print $2}')
-    ./api info "$selected_category"
     
+    ./api info "$selected_category"
     if [ -z "$selected_category" ]; then
-        yad --error --title="Error" --text="Please select a category." --center --on-top --borders=10
-        return
+        exit 1
     fi
     app_directory="$APP_STORE_DIRECTORY"
     
@@ -67,6 +66,9 @@ create_new_app_pane() {
         --button="<b>Cancel</b>!gtk-cancel":1 \
     --button="<b>Next</b>!go-next":0)
     
+    if [ -z "$app_data" ]; then
+        exit 1
+    fi
     ./api info "$app_data"
     # Extracting values from the form data
     app_name=$(echo "$app_data" | awk -F '|' '{print $2}')
@@ -102,6 +104,10 @@ create_new_app_pane() {
         --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
         --button="<b>Cancel</b>!gtk-cancel":1 \
     --button="<b>Next</b>!go-next":0)
+
+    if [ -z "$assets_data" ]; then
+        exit 1
+    fi
     ./api info "$assets_data"
     icon_file=$(echo "$assets_data" | awk -F '|' '{print $2}')
     if [ -n "$icon_file" ]; then
@@ -120,8 +126,7 @@ create_new_app_pane() {
     --field="You now need to write an Installer and an Uninstaller script. These are the scripts executed when users click \"Install\" and \"Uninstall\" in LinStore.\n\nIf you would like to create these now, press 'Next'. Else, press 'Cancel'.:LBL" "" \
     --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
     --button="<b>Cancel</b>!gtk-cancel":1 \
-    --button="<b>Next</b>!go-next":0
-    
+    --button="<b>Next</b>!go-next":0 > /dev/null 2>&1
     
     # Create or update the install scripts based on user preferences
     if [ $? -eq 0 ]; then
@@ -144,6 +149,8 @@ create_new_app_pane() {
 
         gedit "$app_directory/uninstall"
         wait
+    elif [ $? -eq 252 ]; then
+        echo $?
     fi
     
     yad --form \
@@ -154,7 +161,7 @@ create_new_app_pane() {
     --field=":LBL" "" \
     --field="<b>Next Steps:</b>\nSubmit your app for addition to LinStore's app library. You can do this by 'zipping' the new app's directory and uploading it to an issue at <a href='https://github.com/techguy16/LinStore'>our GitHub</a>.\n\nIf you do not wish to do so, you can still distribute your app's zip file by specifying to your users to use LinStore's 'Import App' function.:LBL" "" \
     --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
-    --button="<b>Exit</b>!window-close":0
+    --button="<b>Exit</b>!window-close":0 > /dev/null 2>&1
 }
 
 welcome() {
@@ -167,9 +174,12 @@ welcome() {
     --field="<b>What is this?</b>\nThis is a wizard that will guide you through the necessary steps in order to create an app to be displayed in LinStore.\n\nIf you're ready, press 'Next'.\nIf you got here by accident, press 'Cancel'.:LBL" "" \
     --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
     --button="<b>Cancel</b>!gtk-cancel":1 \
-    --button="<b>Next</b>!go-next":0
-    
-    select_category_pane
+    --button="<b>Next</b>!go-next":0 > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        select_category_pane
+    elif [ $? -eq 252 ]; then
+        exit 1
+    fi
 }
 
 import_zip_file() {
