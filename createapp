@@ -15,49 +15,71 @@ get_editor() {
 select_category_pane() {
     category_list=()
     while read -r category; do
-        category_list+=("$category")
+        category_list+=("images/categories/$category.png" "<b>$category</b>" "$(cat "etc/categoryinfo/${category}")")
     done < "$CATEGORIES_FILE"
-
+    
     selected_category=$(yad --title="Select Category" \
-        --text="Choose a category for the app:" \
+        --image="images/logo/logo-64.png" --image-on-top \
+        --window-icon="images/logo/logo-64.png" \
+        --text="<big><b>Choose a category</b></big>\nLinStore organises apps by category, which allows users to quickly find related apps easier.\nPlease choose a category for your app:" \
         --field="Category:" \
-        --width="400" --height="300" --center --on-top --borders=10 --columns=1 "${category_list[@]}" \
-        --list --column="Categories" )
-
+        --width="525" --height="550" --center --on-top --borders=10 --columns=1 "${category_list[@]}" \
+        --list --column="Icon:IMG" --column="Categories" --column="Description" --no-headers \
+        --button="<b>Cancel</b>!gtk-cancel":1 \
+    --button="<b>Next</b>!go-next":0 | awk -F '|' '{print $2}')
+    ./api info "$selected_category"
+    
     if [ -z "$selected_category" ]; then
         yad --error --title="Error" --text="Please select a category." --center --on-top --borders=10
         return
     fi
     app_directory="$APP_STORE_DIRECTORY"
-
+    
     # Create or update the app files with the collected information
-    echo "${selected_category//|/}" >"$app_directory/category"
+    echo "${selected_category//|/}" | sed 's/<\/\?b>//g' | sed 's/(null)//g' >"$app_directory/category"
     # Call the function to create the app with the selected category
     create_new_app_pane
 }
 
 create_new_app_pane() {
+    app_directory="$APP_STORE_DIRECTORY"
     app_data=$(yad --form \
         --title="Create New App" \
-        --text="Enter the following details for the new app:" \
-        --field="App Name:" \
-        --field="Website:" \
-        --field="Creator:" \
-        --field="x64 (amd64):CHK" \
-        --field="x86 (i386/x86):CHK" \
-        --field="ARM 32-bit (armv7l):CHK" \
-        --field="ARM 64-bit (aarch64):CHK" \
-        --width="400" --center --on-top --borders=10 --separator="|")
-
+        --image="images/logo/logo-64.png" --image-on-top \
+        --window-icon="images/logo/logo-64.png" \
+        --text="<big><b>App Details</b></big>\nYour app needs information for LinStore to properly display it.\nEnter the following details for the new $(cat ${app_directory}/category) app:" \
+        --field=":LBL" "" \
+        --field="<b>App Name:</b>:ENTRY" "" \
+        --field="<b>Website:</b>:ENTRY" "" \
+        --field="<b>Creator:</b>:ENTRY" ""\
+        --field="<b>Donation link:</b>:ENTRY" ""\
+        --field=":LBL" "" \
+        --field="<b>Description:</b>:TXT" "" \
+        --field=":LBL" "" \
+        --field="<b>Architectures supported by your app</b>:LBL" "" \
+        --field="x64 (amd64):CHK" "" \
+        --field="x86 (i386/x86):CHK" "" \
+        --field="ARM 32-bit (armv7l):CHK" "" \
+        --field="ARM 64-bit (aarch64):CHK" "" \
+        --field=":LBL" "" \
+        --field="<b>Separate or combined install scripts?</b>:CB" 'Combined (all architectures in one)!Separate' \
+        --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+        --button="<b>Cancel</b>!gtk-cancel":1 \
+    --button="<b>Next</b>!go-next":0)
+    
+    ./api info "$app_data"
     # Extracting values from the form data
-    app_name=$(echo "$app_data" | awk -F '|' '{print $1}')
-    website=$(echo "$app_data" | awk -F '|' '{print $2}')
-    creator=$(echo "$app_data" | awk -F '|' '{print $3}')
-    install_x64=$(echo "$app_data" | awk -F '|' '{print $4}')
-    install_x86=$(echo "$app_data" | awk -F '|' '{print $5}')
-    install_32=$(echo "$app_data" | awk -F '|' '{print $6}')
-    install_64=$(echo "$app_data" | awk -F '|' '{print $7}')
-
+    app_name=$(echo "$app_data" | awk -F '|' '{print $2}')
+    website=$(echo "$app_data" | awk -F '|' '{print $3}')
+    creator=$(echo "$app_data" | awk -F '|' '{print $4}')
+    donate=$(echo "$app_data" | awk -F '|' '{print $5}')
+    description=$(echo "$app_data" | awk -F '|' '{print $7}')
+    install_x64=$(echo "$app_data" | awk -F '|' '{print $10}')
+    install_x86=$(echo "$app_data" | awk -F '|' '{print $11}')
+    install_32=$(echo "$app_data" | awk -F '|' '{print $12}')
+    install_64=$(echo "$app_data" | awk -F '|' '{print $13}')
+    separate_scripts=$(echo "$app_data" | awk -F '|' '{print $15}')
+    
     # Create the app directory
     app_directory="$APP_STORE_DIRECTORY/$app_name"
     mkdir -p "$app_directory"
@@ -65,36 +87,45 @@ create_new_app_pane() {
     # Create or update the app files with the collected information
     echo "$website" >"$app_directory/website"
     echo "$creator" >"$app_directory/creator"
-
-    # Open a separate dialog for description input
-    description=$(yad --form \
-        --title="Create New App - Description" \
-        --text="<b>Enter a description for the app:</b>" \
-        --field="<b>Description:</b>:TXT" \
-        --width="400" --height="200" --center --on-top --borders=10)
-
-    description=$(echo "$description" | awk -F '|' '{print $1}')
     echo "$description" >"$app_directory/description"
-
+    echo "$donate" >"$app_directory/donate"
+    
     # Generate and resize the icon
-    icon_file=$(yad --file-selection --title="Select Icon for App" --width="400" --center --on-top)
+    #icon_file=$(yad --file-selection --title="Select Icon for App" --width="525" --height="550" --center --on-top)
+    assets_data=$(yad --form \
+        --title="Create New App" \
+        --image="images/logo/logo-64.png" --image-on-top \
+        --window-icon="images/logo/logo-64.png" \
+        --text="<big><b>App Assets</b></big>\nYour app needs assets in LinStore, which is currently limited to the app's logo/icon.\nSelect these assets here:" \
+        --field=":LBL" "" \
+        --field="<b>Icon/logo</b>:SFL" "" \
+        --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+        --button="<b>Cancel</b>!gtk-cancel":1 \
+    --button="<b>Next</b>!go-next":0)
+    ./api info "$assets_data"
+    icon_file=$(echo "$assets_data" | awk -F '|' '{print $2}')
     if [ -n "$icon_file" ]; then
         cp "$icon_file" "$app_directory/icon-original.png"
         convert "$icon_file" -resize 48x48 "$app_directory/icon-48.png"
         convert "$icon_file" -resize 24x24 "$app_directory/icon-24.png"
         convert "$icon_file" -resize 16x16 "$app_directory/icon-16.png"
     fi
-
+    
+    yad --form \
+    --title="Create New App" \
+    --image="images/logo/logo-64.png" --image-on-top \
+    --window-icon="images/logo/logo-64.png" \
+    --text="<big><b>Installer Scripts</b></big>\nYour app has been created!" \
+    --field=":LBL" "" \
+    --field="You now need to write an Installer and an Uninstaller script. These are the scripts executed when users click \"Install\" and \"Uninstall\" in LinStore.\n\nIf you would like to create these now, press 'Next'. Else, press 'Cancel'.:LBL" "" \
+    --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+    --button="<b>Cancel</b>!gtk-cancel":1 \
+    --button="<b>Next</b>!go-next":0
+    
+    
     # Create or update the install scripts based on user preferences
-    if [ "$install_x64" == "TRUE" ] || [ "$install_x86" == "TRUE" ] || [ "$install_32" == "TRUE" ] || [ "$install_64" == "TRUE" ]; then
-        separate_scripts=$(yad --width="400" --height="200" \
-            --title="Install Scripts" \
-            --text="Do you want separate install scripts?" \
-            --button="All in one:0" \
-            --button="Separate:1" \
-            --center --on-top --borders=10)
-
-        if [ $? -eq 0 ]; then
+    if [ $? -eq 0 ]; then
+        if [[ "$separate_scripts" == "Combined (all architectures in one)" ]]; then
             gedit "$app_directory/install" &
         else
             if [ "$install_x64" == "TRUE" ]; then
@@ -110,27 +141,74 @@ create_new_app_pane() {
                 gedit "$app_directory/install-64" &
             fi
         fi
-    fi
 
-    # Create or update the uninstall script and open it in gedit
-    gedit "$app_directory/uninstall" &
+        gedit "$app_directory/uninstall"
+        wait
+    fi
+    
+    yad --form \
+    --title="Create New App" \
+    --image="images/logo/logo-64.png" --image-on-top \
+    --window-icon="images/logo/logo-64.png" \
+    --text="<big><b>Thank you!</b></big>\nThank you for using LinStore's app creation wizard." \
+    --field=":LBL" "" \
+    --field="<b>Next Steps:</b>\nSubmit your app for addition to LinStore's app library. You can do this by 'zipping' the new app's directory and uploading it to an issue at <a href='https://github.com/techguy16/LinStore'>our GitHub</a>.\n\nIf you do not wish to do so, you can still distribute your app's zip file by specifying to your users to use LinStore's 'Import App' function.:LBL" "" \
+    --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+    --button="<b>Exit</b>!window-close":0
+}
+
+welcome() {
+    yad --form \
+    --title="Create New App" \
+    --image="images/logo/logo-64.png" --image-on-top \
+    --window-icon="images/logo/logo-64.png" \
+    --text="<big><b>App Creator</b></big>\nWelcome to the LinStore's app creator!" \
+    --field=":LBL" "" \
+    --field="<b>What is this?</b>\nThis is a wizard that will guide you through the necessary steps in order to create an app to be displayed in LinStore.\n\nIf you're ready, press 'Next'.\nIf you got here by accident, press 'Cancel'.:LBL" "" \
+    --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+    --button="<b>Cancel</b>!gtk-cancel":1 \
+    --button="<b>Next</b>!go-next":0
+    
+    select_category_pane
 }
 
 import_zip_file() {
-    import_file=$(yad --file-selection --title="Select Zip File to Import" --width="400" --center --on-top)
-
+    #import_file=$(yad --file-selection --title="Select Zip File to Import" --height="550" --width="525" --center --on-top)
+    import_file=$(yad --form \
+    --title="Import App" \
+    --image="images/logo/logo-64.png" --image-on-top \
+    --window-icon="images/logo/logo-64.png" \
+    --text="<big><b>Import an app</b></big>\nImport an app packaged as a ZIP into LinStore." \
+    --field=":LBL" "" \
+    --field="Some app developers distribute ZIP files to let you import into LinStore.\n\nTo import such a ZIP file, select it below and we'll import it for you.:LBL" "" \
+    --field="<b>ZIP File: </b>:SFL" "" \
+    --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+    --button="<b>Cancel</b>!gtk-cancel":1 \
+    --button="<b>Next</b>!go-next":0 | awk -F '|' '{print $3}')
+    
+    echo "$import_file"
     if [ -z "$import_file" ]; then
         yad --error --title="Error" --text="No file selected for import." --center --on-top --borders=10
         return
     fi
+    
+    unzip -o "$import_file" -d "$APP_STORE_DIRECTORY"
 
-    unzip "$import_file" -d "$APP_STORE_DIRECTORY"
+    yad --form \
+    --title="Import App" \
+    --image="images/logo/logo-64.png" --image-on-top \
+    --window-icon="images/logo/logo-64.png" \
+    --text="<big><b>Success!</b></big>\nYour app has been successfully imported into LinStore." \
+    --field=":LBL" "" \
+    --field="You should now be able to find the app in the list of available apps!:LBL" "" \
+    --width="525" --height="550" --center --on-top --borders=10 --separator="|" \
+    --button="<b>Close</b>!window-close":0
 }
 
 if [ "$1" == "import" ]; then
     import_zip_file
 elif [ "$1" == "create" ]; then
-    select_category_pane
+    welcome
 else
     echo "Invalid argument. Please provide 'create' or 'import'."
     exit 1
