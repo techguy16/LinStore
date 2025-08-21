@@ -32,23 +32,21 @@ install_app() {
 
     if [ -e "$app_directory/install" ]; then
         echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-        echo "x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
     else
         local architecture=$(cat "$HOME/.linstore/architecture.txt")
         local install_script="install-$architecture"
 
         if [ -e "$app_directory/$install_script" ]; then
             echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-            echo "x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
         else
             if [ -e "$app_directory/packages" ]; then
                 echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
-                echo "x-terminal-emulator -e 'bash -c \"sudo echo && bash $temp_script\"'"
             else
                 echo "echo 'Installation script not found for this architecture.'"
             fi
         fi
     fi
+    echo "x-terminal-emulator -e './api logo && echo \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
 }
 
 # Function to install an app
@@ -99,7 +97,7 @@ uninstall_app() {
         fi
     fi
 
-    echo "x-terminal-emulator -e 'sudo echo && bash \"$temp_script\"'"
+    echo "x-terminal-emulator -e './api logo && echo \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
 }
 
 # Function to search for apps
@@ -135,10 +133,13 @@ search_apps() {
 }
 
 error() {
-    echo -e "\033[1;41m\033[97m ERROR:\033[1;41m $1 \033[0m"
+    echo -e "\033[1;41m\033[97m ERROR:\033[0;41m $1 \033[0m"
 }
 warning() {
-    echo -e "\033[1;43m\033[97m WARNING:\033[1;43m $1 \033[0m"
+    echo -e "\033[1;43m\033[97m WARNING:\033[0;43m $1 \033[0m"
+}
+information() {
+    echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m"
 }
 
 # Main logic to handle command line arguments
@@ -153,7 +154,9 @@ elif [[ $1 == "uninstall" ]]; then
 elif [[ $1 == "logo" ]]; then
     logo
 elif [[ $1 == "error" ]]; then
-    error $2
+    error "$2"
 elif [[ $1 == "warning" ]]; then
-    warning $2
+    warning "$2"
+elif [[ $1 == "info" ]]; then
+    information "$2"
 fi
