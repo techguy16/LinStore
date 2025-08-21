@@ -1,6 +1,5 @@
 #!/bin/bash
 
-clear
 echo """
 
 ██╗░░░░░██╗███╗░░██╗░██████╗████████╗░█████╗░██████╗░███████╗
@@ -8,14 +7,23 @@ echo """
 ██║░░░░░██║██╔██╗██║╚█████╗░░░░██║░░░██║░░██║██████╔╝█████╗░░
 ██║░░░░░██║██║╚████║░╚═══██╗░░░██║░░░██║░░██║██╔══██╗██╔══╝░░
 ███████╗██║██║░╚███║██████╔╝░░░██║░░░╚█████╔╝██║░░██║███████╗
-╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝
-"""
-echo ""
+╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝"""
 echo "Welcome to the LinStore installer!"
 echo ""
+sudo echo
 
 # Check if git and yad are installed
 missing_dependencies=false
+
+error() {
+    echo -e "\033[1;41m\033[97m ERROR:\033[0;41m $1 \033[0m" 1>&2
+}
+warning() {
+    echo -e "\033[1;43m\033[97m WARNING:\033[0;43m $1 \033[0m" 1>&2
+}
+information() {
+    echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m" 1>&2
+}
 
 if ! command -v git &>/dev/null; then
     echo "Git is not installed. Please install Git and rerun the installation."
@@ -23,27 +31,14 @@ if ! command -v git &>/dev/null; then
 fi
 
 if ! command -v yad &>/dev/null; then
-    echo "YAD (Yet Another Dialog) is not installed."
-    read -rp "Do you want to install YAD? (Y/N): " choice
+    warning "Various dependencies required for LinStore are not installed."
+    read -rp "Do you want to install them? (Y/N): " choice
     if [[ $choice =~ ^[Yy]$ ]]; then
-        echo "Installing YAD..."
-        sudo apt update
-        sudo apt install yad
+        information "Installing dependencies..."
+        sudo apt update > /dev/null 2>&1
+        sudo apt install yad wmctrl imagemagick -y > /dev/null 2>&1
     else
-        echo "YAD is required for LinStore installation. Exiting."
-        missing_dependencies=true
-    fi
-fi
-
-if ! command -v wmctrl &>/dev/null; then
-    echo "wmctrl is not installed."
-    read -rp "Do you want to install wmctrl? (Y/N): " choice
-    if [[ $choice =~ ^[Yy]$ ]]; then
-        echo "Installing wmctrl..."
-        sudo apt update
-        sudo apt install wmctrl
-    else
-        echo "wmctrl is required for LinStore installation. Exiting."
+        error "Cannot continue, exiting."
         missing_dependencies=true
     fi
 fi
@@ -52,39 +47,36 @@ if [ "$missing_dependencies" = true ]; then
     exit 1
 fi
 
-# LinStore installation process
 temp_dir=$(mktemp -d) || {
-    echo "Failed to create a temporary directory. Exiting installation."
+    error "Failed to create a temporary directory, exiting."
     exit 1
 }
 
-# Clone repository to the temporary directory
-echo "Cloning necessary files from the repository..."
-if ! git clone https://github.com/techguy16/linstore "$temp_dir"; then
-    echo "Failed to clone repository. Exiting installation."
-    rm -rf "$temp_dir"  # Clean up temporary directory
+information "Cloning necessary files from the repository..."
+if ! git clone https://github.com/techguy16/linstore "$temp_dir" > /dev/null 2>&1; then
+    error "Failed to clone repository. Exiting installation."
+    rm -rf "$temp_dir"
     exit 1
 fi
 
-# Copy necessary files to ~/.linstore
-echo "Copying files to the installation directory..."
+information "Copying files to the installation directory..."
 install_dir="$HOME/.linstore"
 mkdir -p "$install_dir"
 cp -r "$temp_dir"/* "$install_dir"
 cd "$install_dir"
 chmod +x *
-rm -r "$temp_dir"  # Clean up temporary directory
+rm -rf "$temp_dir"  # Clean up temporary directory
 
 # Create a bin directory if it doesn't exist
 sudo mkdir -p /usr/local/bin
 
 # Copy files to /usr/local/bin
-echo "Copying executable files to /usr/local/bin..."
+information "Copying executable files to /usr/local/bin..."
 sudo cp "$install_dir"/tools/*_package /usr/local/bin/
 
 # Create a desktop shortcut for GUI
 desktop_file="$HOME/.local/share/applications/LinStore.desktop"
-echo "Creating desktop shortcut..."
+information "Creating desktop shortcut..."
 cat <<EOF >"$desktop_file"
 [Desktop Entry]
 Name=LinStore
@@ -98,4 +90,4 @@ Icon=$HOME/.linstore/images/logo/logo.png
 Categories=Utility;System;PackageManager;
 EOF
 
-echo "LinStore installed successfully!"
+information "LinStore installed successfully!"
