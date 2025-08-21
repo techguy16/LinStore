@@ -57,7 +57,7 @@ temp_dir=$(mktemp -d) || {
 
 if [ -d "$HOME/.linstore/tmp" ]; then
     information "Using existing cloned files from update..."
-    mv "$HOME/.linstore/tmp/*" "$temp_dir"
+    mv "$HOME"/.linstore/tmp/* "$temp_dir"
     rm -rf "$HOME/.linstore/tmp"
 else
     information "Cloning necessary files from the repository..."
