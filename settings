@@ -60,14 +60,14 @@ show_settings() {
     settings=$(yad --form \
         --title="Settings" --columns=1 --output-by-row \
         --width="150" --height="400" --center --borders=20 \
-        --field="<b>LinStore Settings</b>":LBL "" \
-        --field="Theme":CB "$theme_string" \
-        --field="Text Editor":CB "$texteditors" \
+        --field="<big><b>LinStore Settings</b></big>":LBL "" \
+        --field="<b>Theme</b>":CB "$theme_string" \
+        --field="<b>Text Editor</b>":CB "$texteditors" \
         --field="Show apps from Pi-Apps (if installed)":CHK "${import_piapps}" \
         --field=":LBL" "" \
-        --field="<b>App Management</b>":LBL "" \
-        --field="<b>Create App</b>"!gtk-new!"Create an app for LinStore and Pi-Apps!":FBTN "./createapp create" \
-        --field="<b>Import App</b>"!gtk-open!"Import an app not available in the repository":FBTN "./createapp import" \
+        --field="<big><b>App Management</b></big>":LBL "" \
+        --field="<b>Create App</b>"!document-new!"Create an app for LinStore and Pi-Apps!":FBTN "./createapp create" \
+        --field="<b>Import App</b>"!document-open!"Import an app not available in the repository":FBTN "./createapp import" \
         --button="<b>OK</b>!gtk-ok":0 \
         --button="<b>Cancel</b>!gtk-cancel":1)
     
