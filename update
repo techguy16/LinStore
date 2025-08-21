@@ -105,7 +105,7 @@ check_for_updates() {
                     app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
                     echo "Updating selected: $app_name"
                     if [[ "$(echo $app_name | awk -F" " '{print $1}')" == "LinStore" ]]; then
-                        bash -c "x-terminal-emulator -e './api update && ./gui &'"
+                        bash -c "x-terminal-emulator -e './api update'"
                     else
                         ./api info "Updating app: $app_name"
                         app_directory="$repository_path/$app_name"
