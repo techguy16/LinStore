@@ -1,6 +1,7 @@
-<img src="hhttps://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/banner.png" alt="LinStore logo" style="text-align:center;">
-
-The fastest and lightest app store for Linux.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/banner.png" alt="LinStore logo" style="height:120px;"><br>
+  The <b>fastest</b> and <b>lightest</b> app store for Linux.
+</p>
 
 ## Install
 To install LinStore, run the following command:
