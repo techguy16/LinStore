@@ -9,7 +9,10 @@ show_settings() {
     chmod +x theme
     pkill -f "yad.*"
     
-    selectedtheme=$(cat "etc/theme")
+    selectedtheme=$(cat "etc/theme" 2>/dev/null)
+    if [[ ! -f "e./tc/theme" ]]; then
+        ./api error "etc/theme does not exist"
+    fi
     #echo "$selectedtheme"
     if [[ -z "$selectedtheme" || "$selectedtheme" == " " ]]; then
         themes=("System Default")
@@ -30,8 +33,11 @@ show_settings() {
         theme_string+="$theme"
     done
     
-    selectededitor=$(cat "etc/editor" | sed -r 's/ \(currently selected\)//g')
-    echo "$selectededitor"
+    selectededitor=$(cat "etc/editor" 2>/dev/null | sed -r 's/ \(currently selected\)//g')
+    #echo "$selectededitor"
+    if [[ ! -f "./etc/editor" ]]; then
+        ./api error "etc/editor does not exist"
+    fi
     if [[ -z "$selectededitor" || "$selectededitor" == " " ]]; then
         texteditors="System Default"
     else
@@ -39,7 +45,10 @@ show_settings() {
     fi
     texteditors+="!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium"
 
-    import_piapps_file=$(cat "etc/pi-apps-import")
+    import_piapps_file=$(cat "etc/pi-apps-import" 2>/dev/null)
+    if [[ ! -f "./etc/pi-apps-import" ]]; then
+        ./api error "etc/pi-apps-import does not exist"
+    fi
     #echo "$selectededitor"
     if [[ -z "$import_piapps_file" || "$import_piapps_file" == " " ]]; then
         import_piapps="FALSE"
@@ -107,5 +116,5 @@ show_settings() {
     fi
 }
 
-show_settings
+show_settings > /dev/null
 #show_settings

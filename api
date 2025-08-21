@@ -13,14 +13,12 @@ theme=$(theme_get)
 
 logo() {
     echo """
-
 ██╗░░░░░██╗███╗░░██╗░██████╗████████╗░█████╗░██████╗░███████╗
 ██║░░░░░██║████╗░██║██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██╔════╝
 ██║░░░░░██║██╔██╗██║╚█████╗░░░░██║░░░██║░░██║██████╔╝█████╗░░
 ██║░░░░░██║██║╚████║░╚═══██╗░░░██║░░░██║░░██║██╔══██╗██╔══╝░░
 ███████╗██║██║░╚███║██████╔╝░░░██║░░░╚█████╔╝██║░░██║███████╗
-╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝
-    """
+╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝"""
 }
 
 # Function to install an app
@@ -132,14 +130,18 @@ search_apps() {
     fi
 }
 
+buildinfo() {
+    echo "Update/commit $(git rev-parse --short HEAD) (\"$(git log --pretty='format:%Creset%s' --no-merges -1)\" - $(git log -1 --pretty=format:%an))"
+}
+
 error() {
-    echo -e "\033[1;41m\033[97m ERROR:\033[0;41m $1 \033[0m"
+    echo -e "\033[1;41m\033[97m ERROR:\033[0;41m $1 \033[0m" 1>&2
 }
 warning() {
-    echo -e "\033[1;43m\033[97m WARNING:\033[0;43m $1 \033[0m"
+    echo -e "\033[1;43m\033[97m WARNING:\033[0;43m $1 \033[0m" 1>&2
 }
 information() {
-    echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m"
+    echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m" 1>&2
 }
 
 # Main logic to handle command line arguments
@@ -159,4 +161,6 @@ elif [[ $1 == "warning" ]]; then
     warning "$2"
 elif [[ $1 == "info" ]]; then
     information "$2"
+elif [[ $1 == "buildinfo" ]]; then
+    buildinfo
 fi
