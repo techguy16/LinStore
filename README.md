@@ -19,11 +19,14 @@
 
 ## Welcome to LinStore!
 <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/1.png" align="right" height="270px">
-LinStore is the Linux desktop's best app store, but it's also the lightest and fastest graphical store available, using less RAM than another popular lightweight app store^.
+LinStore is the Linux desktop's best app store, but it's also the lightest and fastest graphical store available, using less RAM than another popular lightweight app store.<sup>^</sup>
 <br><br>
-With a simple GUI and fast features, it's the best choice for easy package management on Linux!
+With a simple GUI and fast features, it's the best choice for easy package management on Linux! More apps are being added all the time, making it the perfect choice for finding the latest and greatest software that works on your Linux system.
+<br><br>
+Unlike many other lightweight app stores, LinStore works on 64-bit, 32-bit and ARM-based computers!
+<br><br>
 
-<sub>^ [Pi-Apps](https://github.com/Botspot/pi-apps)</sub>
+<sub>^ When compared to [Pi-Apps'](https://github.com/Botspot/pi-apps) 9.8MB usage, LinStore uses 8.8MB</sub>
 
 ## Install LinStore
 To install LinStore, run the following command:
@@ -44,6 +47,18 @@ chmod +x install
 
 <hr>
 
+### Launching LinStore
+To launch LinStore:
+- **In GNOME**: Find LinStore in your dash
+- **Other desktop environments**: Find the LinStore in the "System" category of your launcher
+
+To launch LinStore via the command line, run the following command:
+```bash
+~/.linstore/gui
+```
+
+<hr>
+
 ### Supported operating systems
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Openlogo-debianV2.svg/1200px-Openlogo-debianV2.svg.png" height="16px"> **Debian** 13/12/11
 
@@ -53,7 +68,7 @@ chmod +x install
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Pop%21_OS_Icon.svg/2048px-Pop%21_OS_Icon.svg.png" height="16px"> **Pop!_OS** 22.04/20.04
 
-<img src="https://www.svgrepo.com/show/303239/raspberry-pi-logo.svg" height="16px"> **Raspberry Pi OS** - versions based on supported **Debian** versions are supported.
+<img src="https://www.svgrepo.com/show/303239/raspberry-pi-logo.svg" height="16px"> **Raspberry Pi OS** - versions based on supported **Debian** versions are supported (images from after **8th Nov 2021**)
 
 ## Important details
 
