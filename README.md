@@ -20,7 +20,7 @@
 ## Welcome to LinStore!
 <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/1.png" align="right" height="270px">
 LinStore is the Linux desktop's best app store, but it's also the lightest and fastest graphical store available, using less RAM than another popular lightweight app store^.
-
+<br><br>
 With a simple GUI and fast features, it's the best choice for easy package management on Linux!
 
 <sub>^ [Pi-Apps](https://github.com/Botspot/pi-apps)</sub>
@@ -42,11 +42,12 @@ chmod +x install
 ```
 </details>
 
+<hr>
 
 ### Supported operating systems
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Openlogo-debianV2.svg/1200px-Openlogo-debianV2.svg.png" height="16px"> **Debian** 13/12/11
 
-<img src="https://res.cloudinary.com/canonical/image/fetch/f_auto,q_auto,fl_sanitize,c_fill,w_100/https%3A%2F%2Fapi.charmhub.io%2Fapi%2Fv1%2Fmedia%2Fdownload%2Fcharm_Jfd56ZWJ9IaNHuPjXVLP9d9Xa2XMTSKp_icon_ad1a94cf9bb9f68614cb6c17e54e2fbd9dcc7fecc514dc6012b7f58fb5b87f8f.png" height="16px"> **Ubuntu** 24.04/22.04/20.04
+<img src="https://res.cloudinary.com/canonical/image/fetch/f_auto,q_auto,fl_sanitize,c_fill,w_100/https%3A%2F%2Fapi.charmhub.io%2Fapi%2Fv1%2Fmedia%2Fdownload%2Fcharm_Jfd56ZWJ9IaNHuPjXVLP9d9Xa2XMTSKp_icon_ad1a94cf9bb9f68614cb6c17e54e2fbd9dcc7fecc514dc6012b7f58fb5b87f8f.png" height="16px"> **Ubuntu** 24.04/22.04/20.04 LTS
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Linux_Mint_logo_without_wordmark.svg/1200px-Linux_Mint_logo_without_wordmark.svg.png" height="16px"> **Linux Mint** 22.x/21.x/20.x 
 
