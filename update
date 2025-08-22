@@ -83,9 +83,19 @@ check_for_updates() {
             updates+=(FALSE "" "$app_name (No directory found)")
         fi
     done
-
+	
+    buttons=()
     pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
-    x2=$((horizontal / 2 - 40))
+    if pgrep -x "gui" >/dev/null; then
+    	./api info "Running with LinStore GUI open"
+    	buttons+=("--button=<b>Update Selected</b>:0")
+    	x2=$((horizontal / 2 - 40))
+    else
+    	./api info "Running without LinStore open"
+    	buttons+=("--button=Return to LinStore!edit-undo:1")
+        buttons+=("--button=<b>Update Selected</b>:0")
+    	x2=$((horizontal / 2 - 225))
+    fi
     y2=$((vertical / 2 - 340))
     if [ ${#updates[@]} -eq 0 ]; then
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
@@ -93,7 +103,7 @@ check_for_updates() {
     else
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
         updates_list=$(GDK_BACKEND=x11 yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --button="Update Selected:0" --hide-header)
+            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --hide-header "${buttons[@]}")
 
         response=$?
 
@@ -115,6 +125,9 @@ check_for_updates() {
                 fi
             done
             ./update
+        elif [ $response -eq 1 ]; then
+            pkill -f "yad.*LinStore*"
+            ./gui
         fi
     fi
 }
