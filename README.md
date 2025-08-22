@@ -50,7 +50,7 @@ chmod +x install
 ### Launching LinStore
 To launch LinStore:
 - **In GNOME**: Find LinStore in your dash
-- **Other desktop environments**: Find the LinStore in the "System" category of your launcher
+- **Other desktop environments**: Find LinStore in the "System" or "System Tools" category of your launcher
 
 To launch LinStore via the command line, run the following command:
 ```bash
@@ -74,7 +74,7 @@ To launch LinStore via the command line, run the following command:
 
 ### Installing Pi-Apps apps
 <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/2.png" align="right" height="240">
-LinStore has support to install non-package apps from Pi-Apps. To do so, import a ZIP file for a Pi-Apps app or enable the "Show apps from Pi-Apps (if installed)" option in LinStore's settings, which will show Pi-Apps' app library if it is installed.
-
+LinStore has the ability to install non-package apps from Pi-Apps. <br><br>To do so, import a ZIP file for a Pi-Apps app or enable the "Show apps from Pi-Apps (if installed)" option in LinStore's settings, which will show Pi-Apps' app library if it is installed.
+<br><br>
 <code>install_package</code> and <code>remove_package</code> are separate scripts, unlike Pi-Apps which uses a large script (<code>manage</code>) for everything.
 
