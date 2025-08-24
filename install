@@ -33,13 +33,13 @@ if ! command -v git &>/dev/null; then
     missing_dependencies=true
 fi
 
-if ! command -v yad &>/dev/null; then
+if ! command -v yad wmctrl convert xdotool &>/dev/null; then
     warning "Various dependencies required for LinStore are not installed."
     read -rp "Do you want to install them? (Y/N): " choice
     if [[ $choice =~ ^[Yy]$ ]]; then
         information "Installing dependencies..."
         sudo apt update > /dev/null 2>&1
-        sudo apt install yad wmctrl imagemagick -y > /dev/null 2>&1
+        sudo apt install yad wmctrl imagemagick xdotool -y > /dev/null 2>&1
     else
         error "Cannot continue, exiting."
         missing_dependencies=true
