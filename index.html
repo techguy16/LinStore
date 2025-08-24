@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinStore</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #fdfdfd;
+      color: #222;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, #2e3440, #4c566a);
+      color: #fff;
+    }
+    header img {
+      height: 121px;
+      width: 403px;
+    }
+    @media screen and (max-width:360px) {
+      header img { height: 80px; width:266px; }
+    }
+    header h3 {
+      font-weight: 400;
+      margin-top: 1rem;
+    }
+    header h3 b {
+      color: #88c0d0;
+    }
+    .badges {
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .badges a img {
+      margin: 0 0.3rem;
+    }
+    .quick-links {
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .quick-links a {
+      color: #007acc;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .quick-links a:hover {
+      text-decoration: underline;
+    }
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h2, h3 {
+      border-bottom: 2px solid #e5e5e5;
+      padding-bottom: 0.3rem;
+      margin-top: 2rem;
+    }
+    img.screenshot {
+      float: right;
+      margin: 0 0 1rem 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    code, pre {
+      background: #2e3440;
+      color: #eceff4;
+      padding: 0.3rem 0.5rem;
+      border-radius: 5px;
+      font-family: monospace;
+    }
+    pre {
+      display: block;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    details {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 2rem 0;
+    }
+    .os-list img {
+      height: 16px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 2rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/banner.png" alt="LinStore logo">
+    <h3>The <b>fastest</b> and <b>lightest</b> app store for Linux.</h3>
+  </header>
+
+  <div class="badges">
+    <a href="https://github.com/techguy16/LinStore/stargazers"><img src="https://img.shields.io/github/stars/techguy16/LinStore"></a>
+    <a href="https://github.com/techguy16/LinStore/network/members"><img src="https://img.shields.io/github/forks/techguy16/LinStore"></a>
+    <a href="https://github.com/techguy16/LinStore/pulls"><img src="https://img.shields.io/github/issues-pr/techguy16/LinStore"></a>
+    <a href="https://github.com/techguy16/LinStore/issues?q=is%3Aopen"><img src="https://img.shields.io/github/issues/techguy16/LinStore"></a>
+  </div>
+
+  <div class="quick-links">
+    Quick Links:
+    <a href="https://github.com/techguy16/LinStore/issues/new?template=bug.yml">Report an error</a> |
+    <a href="https://github.com/techguy16/LinStore/issues/new?template=app-request.yml">Suggest new app</a> |
+    <a href="https://github.com/techguy16/LinStore/issues/new?template=app-submission.yml">Submit a new app</a>
+  </div>
+
+  <main>
+    <h2>Welcome to LinStore!</h2>
+    <img class="screenshot" src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/1.png" height="270">
+    <p>
+      LinStore is the Linux desktop's best app store, but it's also the lightest and fastest graphical store available,
+      using less RAM than another popular lightweight app store.<sup>^</sup>
+    </p>
+    <p>
+      With a simple GUI and fast features, it's the best choice for easy package management on Linux! More apps are
+      being added all the time, making it the perfect choice for finding the latest and greatest software that works on
+      your Linux system.
+    </p>
+    <p>
+      Unlike many other lightweight app stores, LinStore works on 64-bit, 32-bit and ARM-based computers!
+    </p>
+    <p><sub>^ When compared to <a href="https://github.com/Botspot/pi-apps">Pi-Apps'</a> 9.8MB usage, LinStore uses 8.8MB</sub></p>
+
+    <h2>Install LinStore</h2>
+    <p>To install LinStore, run the following command:</p>
+    <pre><code>curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | bash</code></pre>
+
+    <details>
+      <summary>Manually install LinStore</summary>
+      <pre><code>git clone https://github.com/techguy16/LinStore ~/.linstore
+cd ~/.linstore
+chmod +x install
+./install</code></pre>
+    </details>
+
+    <hr>
+
+    <h3>Launching LinStore</h3>
+    <p>To launch LinStore:</p>
+    <ul>
+      <li><b>In GNOME</b>: Find LinStore in your dash</li>
+      <li><b>Other desktop environments</b>: Find LinStore in the "System" or "System Tools" category of your launcher</li>
+    </ul>
+    <p>To launch LinStore via the command line, run:</p>
+    <pre><code>~/.linstore/gui</code></pre>
+
+    <hr>
+
+    <h3>Supported operating systems</h3>
+    <div class="os-list">
+      <p><img src="https://upload.wikimedia.org/wikipedia/commons/6/66/Openlogo-debianV2.svg"> <b>Debian</b> 13/12/11</p>
+      <p><img src="https://res.cloudinary.com/canonical/image/fetch/f_auto,q_auto,fl_sanitize,c_fill,w_100/https%3A%2F%2Fapi.charmhub.io%2Fapi%2Fv1%2Fmedia%2Fdownload%2Fcharm_Jfd56ZWJ9IaNHuPjXVLP9d9Xa2XMTSKp_icon_ad1a94cf9bb9f68614cb6c17e54e2fbd9dcc7fecc514dc6012b7f58fb5b87f8f.png"> <b>Ubuntu</b> 24.04/22.04/20.04 LTS</p>
+      <p><img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Linux_Mint_logo_without_wordmark.svg"> <b>Linux Mint</b> 22.x/21.x/20.x</p>
+      <p><img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Pop%21_OS_Icon.svg"> <b>Pop!_OS</b> 22.04/20.04</p>
+      <p><img src="https://www.svgrepo.com/show/303239/raspberry-pi-logo.svg"> <b>Raspberry Pi OS</b> - versions based on supported Debian versions (after Nov 8, 2021)</p>
+    </div>
+
+    <h2>Important details</h2>
+    <h3>Installing Pi-Apps apps</h3>
+    <img class="screenshot" src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/2.png" height="240">
+    <p>
+      LinStore has the ability to install non-package apps from Pi-Apps. <br><br>
+      To do so, import a ZIP file for a Pi-Apps app or enable the
+      <i>"Show apps from Pi-Apps (if installed)"</i> option in LinStore's settings, which will show Pi-Apps' app library if installed.
+    </p>
+    <p><code>install_package</code> and <code>remove_package</code> are separate scripts, unlike Pi-Apps which uses a single large script (<code>manage</code>).</p>
+
+  </main>
+
+  <footer>
+    &copy; 2023-2025 techguy16
+  </footer>
+
+</body>
+</html>
