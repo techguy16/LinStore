@@ -85,6 +85,7 @@ check_for_updates() {
     done
 	
     buttons=()
+    buttons_noupd=()
     pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
     if pgrep -x "gui" >/dev/null; then
     	./api info "Running with LinStore GUI open"
@@ -99,7 +100,7 @@ check_for_updates() {
     y2=$((vertical / 2 - 340))
     if [ ${#updates[@]} -eq 0 ]; then
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
-        GDK_BACKEND=x11 yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2}
+        GDK_BACKEND=x11 yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2} "${buttons_noupd[@]}"
     else
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
         updates_list=$(GDK_BACKEND=x11 yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
