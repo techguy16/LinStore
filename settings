@@ -54,6 +54,17 @@ show_settings() {
     else
         import_piapps="${import_piapps_file}"
     fi
+
+    express_updates_file=$(cat "etc/express-updates" 2>/dev/null)
+    if [[ ! -f "./etc/express-updates" ]]; then
+        ./api error "etc/express-updates does not exist"
+    fi
+    #echo "$selectededitor"
+    if [[ -z "$express_updates_file" || "$express_updates_file" == " " ]]; then
+        express_updates="FALSE"
+    else
+        express_updates="${express_updates_file}"
+    fi
     
     # I don't know why these are around this way, and why they only work that way.
     settings=$(yad --form \
@@ -63,6 +74,7 @@ show_settings() {
         --field="<b>Theme</b>":CB "$theme_string" \
         --field="<b>Text Editor</b>":CB "$texteditors" \
         --field="Show apps from Pi-Apps (if installed)":CHK "${import_piapps}" \
+        --field="Express Updates":CHK "${express_updates}" \
         --field=":LBL" "" \
         --field="<big><b>App Management</b></big>":LBL "" \
         --field="<b>Create App</b>"!document-new!"Create an app for LinStore and Pi-Apps!":FBTN "./createapp create" \
@@ -104,8 +116,10 @@ show_settings() {
         fi
 
         import_from_piapps=$(echo "$fixed_settings" | awk -F '|' '{print $4}')
-        echo $import_from_piapps
         echo $import_from_piapps > "etc/pi-apps-import"
+
+        express_updates=$(echo "$fixed_settings" | awk -F '|' '{print $5}')
+        echo $express_updates > "etc/express-updates"
         
         ./gui
     elif [[ $yad_ret -eq 252 ]]; then

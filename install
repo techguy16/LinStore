@@ -55,10 +55,19 @@ temp_dir=$(mktemp -d) || {
     exit 1
 }
 
-if [ -d "$HOME/.linstore/tmp" ]; then
-    information "Using existing cloned files from update..."
-    mv "$HOME"/.linstore/tmp/* "$temp_dir"
-    rm -rf "$HOME/.linstore/tmp"
+if [ -e "etc/express-updates" || -e "$HOME/.linstore/etc/express-updates" ]; then
+    if [[ "$(cat etc/express-updates 2>/dev/null)" == "TRUE" || "$(cat $HOME/.linstore/etc/express-updates 2>/dev/null)" == "TRUE" ]]; then
+        information "Using existing cloned files from update..."
+        mv "$HOME"/.linstore/tmp/* "$temp_dir"
+        rm -rf "$HOME/.linstore/tmp"
+    else
+        information "Cloning necessary files from the repository..."
+        if ! git clone https://github.com/techguy16/linstore "$temp_dir" > /dev/null 2>&1; then
+            error "Failed to clone repository. Exiting installation."
+            rm -rf "$temp_dir"
+            exit 1
+        fi
+    fi
 else
     information "Cloning necessary files from the repository..."
     if ! git clone https://github.com/techguy16/linstore "$temp_dir" > /dev/null 2>&1; then
