@@ -5,12 +5,12 @@ install_package() {
 
     if [[ "$package" == http* ]]; then
         echo "Downloading and installing $package..."
-        wget "$package" -O /tmp/package.deb 2>&1
-        sudo dpkg -i /tmp/package.deb 2>&1
+        wget --no-check-certificate "$package" -O /tmp/package.deb > /dev/null 2>&1
+        sudo dpkg -i /tmp/package.deb > /dev/null 2>&1
         rm -r /tmp/package.deb
     elif [[ "$package" == *.deb ]]; then
         echo "Installing $package using dpkg..."
-        sudo dpkg -i "$package" 2>&1
+        sudo dpkg -i "$package" > /dev/null 2>&1
     else
         echo "Installing $package using apt..."
         sudo apt update > /dev/null 2>&1
