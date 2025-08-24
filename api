@@ -159,13 +159,19 @@ buildinfo() {
 }
 
 error() {
-    echo -e "\033[1;41m\033[97m ERROR:\033[0;41m $1 \033[0m" 1>&2
+    local msg
+    msg=$(printf "%s" "$*" | tr -d '\n')
+    printf '\033[1;41;97m ERROR:\033[0;41m %s \033[0m\n' "$msg" >&2
 }
 warning() {
-    echo -e "\033[1;43m\033[97m WARNING:\033[0;43m $1 \033[0m" 1>&2
+    local msg
+    msg=$(printf "%s" "$*" | tr -d '\n')
+    printf '\033[1;43;97m WARNING:\033[0;43m %s \033[0m\n' "$msg" >&2
 }
 information() {
-    echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m" 1>&2
+    local msg
+    msg=$(printf "%s" "$*" | tr -d '\n')
+    printf '\033[1;104;30m INFO:\033[0;104m %s \033[0m\n' "$msg" >&2
 }
 
 # Main logic to handle command line arguments

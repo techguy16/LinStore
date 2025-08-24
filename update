@@ -136,7 +136,7 @@ check_for_updates() {
         done
         ./update
     elif [ $response -eq 1 ]; then
-        pkill -f "yad.*LinStore*"
+        ./gui
     elif [ $response -eq 2 ]; then
         ./update
     fi
