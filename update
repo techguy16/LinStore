@@ -89,47 +89,57 @@ check_for_updates() {
     pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
     if pgrep -x "gui" >/dev/null; then
     	./api info "Running with LinStore GUI open"
+        buttons+=("--button=Recheck Updates!edit-find:2")
     	buttons+=("--button=<b>Update Selected</b>:0")
+        buttons_noupd+=("--button=Recheck Updates!edit-find:2")
+        buttons_noupd+=("--button=Finish!go-next:3")
     	x2=$((horizontal / 2 - 40))
     else
     	./api info "Running without LinStore open"
     	buttons+=("--button=Return to LinStore!edit-undo:1")
-        buttons+=("--button=<b>Update Selected</b>:0")
+        buttons+=("--button=Recheck Updates!edit-find:2")
+        buttons+=("--button=<b>Update Selected</b>!view-refresh:0")
+        buttons_noupd+=("--button=Return to LinStore!edit-undo:1")
+        buttons_noupd+=("--button=Recheck Updates!edit-find:2")
+        buttons_noupd+=("--button=Finish!go-next:3")
     	x2=$((horizontal / 2 - 225))
     fi
     y2=$((vertical / 2 - 340))
+
     if [ ${#updates[@]} -eq 0 ]; then
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
-        GDK_BACKEND=x11 yad --info --title="LinStore Updates" --text="All apps are up to date!" --geometry=450x600+${x2}+${y2} "${buttons_noupd[@]}"
+        GDK_BACKEND=x11 yad --info --title="LinStore Updates" --text="<big><b>All apps are up to date!</b></big>" --text-align=center --geometry=450x600+${x2}+${y2} "${buttons_noupd[@]}"
+        response=$?
     else
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
         updates_list=$(GDK_BACKEND=x11 yad --list --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
             "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --hide-header "${buttons[@]}")
-
         response=$?
+    fi
 
-        if [ $response -eq 0 ]; then
-            IFS=$'\n' read -d '' -r -a selected_apps <<<"$updates_list"
+    if [ $response -eq 0 ]; then
+        IFS=$'\n' read -d '' -r -a selected_apps <<<"$updates_list"
 
-            for selected in "${selected_apps[@]}"; do
-                if [[ "$selected" == TRUE* ]]; then
-                    app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
-                    echo "Updating selected: $app_name"
-                    if [[ "$(echo $app_name | awk -F" " '{print $1}')" == "LinStore" ]]; then
+        for selected in "${selected_apps[@]}"; do
+            if [[ "$selected" == TRUE* ]]; then
+                app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
+                echo "Updating selected: $app_name"
+                if [[ "$(echo $app_name | awk -F" " '{print $1}')" == "LinStore" ]]; then
                         bash -c "x-terminal-emulator -e './api update'"
-                    else
-                        ./api info "Updating app: $app_name"
-                        app_directory="$repository_path/$app_name"
-                        install=$(./api install "$app_directory" "$app_name")
-                        bash -c "${install}"
-                    fi
+                else
+                    ./api info "Updating app: $app_name"
+                    app_directory="$repository_path/$app_name"
+                    install=$(./api install "$app_directory" "$app_name")
+                    bash -c "${install}"
                 fi
-            done
-            ./update
-        elif [ $response -eq 1 ]; then
-            pkill -f "yad.*LinStore*"
-            ./gui
-        fi
+            fi
+        done
+        ./update
+    elif [ $response -eq 1 ]; then
+        pkill -f "yad.*LinStore*"
+        ./gui
+    elif [ $response -eq 2 ]; then
+        ./update
     fi
 }
 

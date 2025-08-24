@@ -199,6 +199,9 @@ app_details_page() {
     local install_command=$(./api install "$app_directory" "$selected_app_name")
     local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
 
+    local open_command=$(./api open "$app_directory")
+    buttons=()
+
     if [[ "$installed" == "true" ]]; then
         displayName="<b>${selected_app_name}</b> (<i>installed</i>)"
         buttonText="Uninstall"
@@ -208,11 +211,18 @@ app_details_page() {
         echo "$uninstall_command && rm -rf \"$HOME/.linstore/installscripts/$selected_app_name\"" >"$temp_script"
         chmod +x "$temp_script"
         buttonCommand="bash -c 'bash $temp_script; rm $temp_script'"
+        if [[ "$open_command" != "" ]]; then
+            buttons+=("--button=<b>Open</b>!system-run:$open_command")
+        fi
     else
         displayName="<b>${selected_app_name}</b> (<i>not installed</i>)"
-        buttonText="Install"
+        buttonText="<b>Install</b>"
         buttonImage="images/button/install.png"
         buttonCommand="$install_command"
+    fi
+
+    if [[ "$open" != "" ]]; then
+        buttons+=("--button=Open!system-run:$open")
     fi
 
     if [[ -f "$app_directory/donate" ]]; then
@@ -225,7 +235,7 @@ app_details_page() {
         GDK_BACKEND=x11 $YAD_COMMAND --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
             --text "<big>${displayName}</big>\nBy <b>${creator}</b> (<a href='${website}'>App Website</a>)\n${donate}" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            --button="$buttonText!$buttonImage:$buttonCommand" --skip-taskbar --noclose
+            --button="$buttonText!$buttonImage:$buttonCommand" "${buttons[@]}" --skip-taskbar --noclose
     )
 
     rm -f /tmp/description.tmp

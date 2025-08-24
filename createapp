@@ -90,7 +90,9 @@ create_new_app_pane() {
     echo "$website" >"$app_directory/website"
     echo "$creator" >"$app_directory/creator"
     echo "$description" >"$app_directory/description"
-    echo "$donate" >"$app_directory/donate"
+    if [[ "$donate" != "" ]]; then
+        echo "$donate" >"$app_directory/donate"
+    fi
     
     # Generate and resize the icon
     #icon_file=$(yad --file-selection --title="Select Icon for App" --width="525" --height="550" --center --on-top)

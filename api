@@ -47,6 +47,16 @@ install_app() {
     echo "x-terminal-emulator -e './api logo && ./api info \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
 }
 
+open_app() {
+    local app_directory="$1"
+
+    if [ -e "$app_directory/open" ]; then
+        cat "$app_directory/open"
+    else
+        echo ""
+    fi
+}
+
 # Function to install an app
 installation_script() {
     local app_directory="$1"
@@ -100,7 +110,8 @@ uninstall_app() {
 
 # Function to search for apps
 search_apps() {
-    query=$(GTK_THEME="${theme}" yad --title="Search Apps" --center --text="Enter query:" --entry)
+    query=$(GTK_THEME="${theme}" yad --title="Search Apps" --borders=10 --center --text="Enter query:" --entry \
+            --button="Cancel!gtk-cancel":1 --button="Search!edit-find":0)
     if [ -n "$query" ]; then
         app_list=$(ls -w 1 ./apps | awk 'BEGIN {ORS="\n"} {print}')
         num_apps=$(echo "$app_list" | wc -l)
@@ -119,13 +130,20 @@ search_apps() {
         done
 
         if [ ${#apps_found[@]} -gt 0 ]; then
-            selected_category2=$(GTK_THEME="${theme}" yad --center --title="Search Results for ${query}" --width=400 --height=300 --list --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10)
+            selected_category2=$(GTK_THEME="${theme}" yad --center --title="Search Results" --width=400 --height=300 \
+            --list --text="<big><b>Search Results for '${query}'</b></big>" --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10 --button="Exit!gtk-cancel":1 --button="View App!edit-find":0)
             if [ -n "$selected_category2" ]; then
                 echo "$(echo ${selected_category2} | sed 's/|//g')" > /tmp/tmpname
                 ./gui showdetails
             fi
         else
-            GTK_THEME="${theme}" yad --center --title="Search Results for ${query}" --width=300 --height=100 --text="No apps found for '${query}'.\nPlease try another query." --borders=10 --button="OK:0" --center
+            GTK_THEME="${theme}" yad --center --title="Search Results" --width=300 --height=100 \
+            --text="<big><b>No apps found for '${query}'.</b></big>\nPlease try another query." --borders=10 --center \
+            --button="Retry!edit-find":1 --button="Exit!gtk-cancel":0
+            response=$?
+            if [ $response -eq 1 ]; then
+                ./api search
+            fi
         fi
     fi
 }
@@ -171,4 +189,6 @@ elif [[ $1 == "buildinfo" ]]; then
     buildinfo
 elif [[ $1 == "update" ]]; then
     update
+elif [[ $1 == "open" ]]; then
+    open_app "$2"
 fi
