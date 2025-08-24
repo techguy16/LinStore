@@ -87,7 +87,7 @@ check_for_updates() {
     buttons=()
     buttons_noupd=()
     pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
-    if pgrep -x "gui" >/dev/null; then
+    if pgrep -f "title=LinStore" >/dev/null; then
     	./api info "Running with LinStore GUI open"
         buttons+=("--button=Recheck Updates!edit-find:2")
     	buttons+=("--button=<b>Update Selected</b>:0")
