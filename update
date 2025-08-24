@@ -102,7 +102,7 @@ check_for_updates() {
         buttons_noupd+=("--button=Return to LinStore!edit-undo:1")
         buttons_noupd+=("--button=Recheck Updates!edit-find:2")
         buttons_noupd+=("--button=Finish!go-next:3")
-    	x2=$((horizontal / 2 - 225))
+    	x2=$((horizontal / 2 - 265))
     fi
     y2=$((vertical / 2 - 340))
 

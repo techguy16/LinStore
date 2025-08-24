@@ -104,4 +104,7 @@ EOF
 information "Cleaning up cached files..."
 rm -rf "$HOME/.linstore/tmp/"
 
+information "Creating important directories..."
+mkdir -p "$HOME/.linstore/installscripts"
+
 information "LinStore installed successfully!"
