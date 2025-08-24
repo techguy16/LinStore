@@ -1,0 +1,16 @@
+#!/bin/bash
+
+git clone https://github.com/Pi-Apps-Recreates/pi-apps-x86 "$HOME/pi-apps"
+cd "$HOME/pi-apps"
+chmod +x install
+
+# Developers forgot to remove check for ARM
+sed -i 's/! uname/uname/' install
+
+bash ./install
+
+for file in gui updater preload api manage "etc/terminal-run"; do
+  chmod +x "$HOME/pi-apps/$file"
+done
+
+echo "" > "$HOME/pi-apps/data/settings/App List Style"

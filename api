@@ -160,17 +160,17 @@ buildinfo() {
 
 error() {
     local msg
-    msg=$(printf "%s" "$*" | tr -d '\n')
+    msg=$(printf "%s" "$*" | tr -d '\n' | sed 's/\\n/ /g')
     printf '\033[1;41;97m ERROR:\033[0;41m %s \033[0m\n' "$msg" >&2
 }
 warning() {
     local msg
-    msg=$(printf "%s" "$*" | tr -d '\n')
+    msg=$(printf "%s" "$*" | tr -d '\n' | sed 's/\\n/ /g')
     printf '\033[1;43;97m WARNING:\033[0;43m %s \033[0m\n' "$msg" >&2
 }
 information() {
     local msg
-    msg=$(printf "%s" "$*" | tr -d '\n')
+    msg=$(printf "%s" "$*" | tr -d '\n' | sed 's/\\n/ /g')
     printf '\033[1;104;30m INFO:\033[0;104m %s \033[0m\n' "$msg" >&2
 }
 

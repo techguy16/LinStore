@@ -1,0 +1,3 @@
+cd "$HOME/pi-apps"
+./uninstall
+rm -rf "$HOME/pi-apps"

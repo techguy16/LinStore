@@ -79,8 +79,9 @@ check_for_updates() {
                 icon_path="$app_directory/icon-16.png"
                 updates+=(TRUE "$icon_path" "$app_name")
             fi
-        else
-            updates+=(FALSE "" "$app_name (No directory found)")
+        # unneeded - linstore is useless without the app directory
+        #else
+        #    updates+=(FALSE "" "$app_name (No directory found)")
         fi
     done
 	

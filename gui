@@ -264,9 +264,11 @@ show_apps_in_category() {
             all_apps_list=()
             for app_dir in apps/*; do
                 app_name=$(basename "$app_dir")
-                app_icon="apps/$app_name/icon-24.png"
-                all_apps_list+=("$app_icon")
-                all_apps_list+=("$app_name")
+                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ]; then
+                    app_icon="apps/$app_name/icon-24.png"
+                    all_apps_list+=("$app_icon")
+                    all_apps_list+=("$app_name")
+                fi
             done
 
             GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$1</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
