@@ -16,6 +16,7 @@ A typical app info directory has the following components:
 | `install-64` | :white_check_mark: | :white_check_mark: | Command to run when installing the app on ARM64 |
 | `install-x86` | :white_check_mark: | :x: | Command to run when installing the app on Intel/AMD x86 |
 | `install-x64` | :white_check_mark: | :x: | Command to run when installing the app on Intel/AMD AMD64 |
+| `open` | :white_check_mark: | :x: | Command to open an application after being installed |
 | `packages` | :x: | :white_check_mark: | `apt` packages to install |
 | `uninstall` | :white_check_mark: | :white_check_mark: | Command to run when uninstalling a program |
 | `website` | :white_check_mark: | :white_check_mark: | The website for a program |
