@@ -171,6 +171,34 @@ theme_get() {
 }
 theme=$(theme_get)
 
+###################################
+# Graphical environments go below #
+
+multi_install() {
+    all_apps_list=()
+    for app_dir in apps/*; do
+        app_name=$(basename "$app_dir")
+        if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ]; then
+            app_icon="apps/$app_name/icon-24.png"
+            all_apps_list+=("FALSE")
+            all_apps_list+=("$app_icon")
+            all_apps_list+=("$app_name")
+        fi
+    done
+
+    APPS=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>Multi Installer</b></big>\nInstall multiple apps at once" --geometry=600x${APP_STORE_HEIGHT} --center --columns="3" \
+        --list --checklist --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column="Select":chk --column "Icon:IMG" --column "Apps" \
+        --button="Install"!images/button/install.png!:0 "${all_apps_list[@]}" --no-headers)
+
+    list=""
+    while IFS= read -r line; do
+        list+="$(echo -e "$line" | awk -F "|" '{print $3}')"
+        list+=$'\n'
+    done <<< "$APPS"
+    echo "$list"
+    ./manage multi-install "$list"
+}
+
 app_details_page() {
     kill $(pgrep -f "title=App Details") > /dev/null 2>&1
     sleep 0.1
@@ -357,6 +385,8 @@ if [[ $1 == "showdetails" ]]; then
     else
         app_details_page "$(echo $2 | awk -F"'" '{print $4}')"
     fi
+elif [[ $1 == "multi-install" ]]; then
+    multi_install
 else
     detect_and_write_architecture
     show_app_store

@@ -79,6 +79,7 @@ show_settings() {
         --field="<big><b>App Management</b></big>":LBL "" \
         --field="<b>Create App</b>"!document-new!"Create an app for LinStore and Pi-Apps!":FBTN "./createapp create" \
         --field="<b>Import App</b>"!document-open!"Import an app not available in the repository":FBTN "./createapp import" \
+        --field="<b>Multi-Install</b>"!"images/button/install.png"!"Install multiple applications at once":FBTN "./gui multi-install" \
         --button="<b>OK</b>!gtk-ok":0 \
         --button="<b>Cancel</b>!gtk-cancel":1)
     

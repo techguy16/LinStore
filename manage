@@ -1,0 +1,40 @@
+#!/bin/bash
+# LinStore "manage" script
+# Designed for compatibility with Pi-Apps
+# Very basic, sorry!
+
+install() {
+    local install_command=$(./api install "apps/$1" "$1")
+    bash -c "$install_command"
+}
+
+multi_install() {
+    while IFS= read -r line; do
+        local install_command=$(./api install "apps/$line" "$line")
+        bash -c "$install_command"
+    done <<< "$1"
+}
+
+uninstall() {
+    local uninstall_command=$(./api uninstall "apps/$1" "$1")
+    bash -c "$uninstall_command"
+}
+
+multi_uninstall() {
+    while IFS= read -r line; do
+        local uninstall_command=$(./api uninstall "apps/$line" "$line")
+        bash -c "$uninstall_command"
+    done <<< "$1"
+}
+
+if [[ $1 == "install" ]]; then
+    install "$2"
+elif [[ $1 == "multi-install" ]]; then
+    multi_install "$2"
+elif [[ $1 == "update" ]]; then
+    install "$2"
+elif [[ $1 == "multi-uninstall" ]]; then
+    multi_uninstall "$2"
+elif [[ $1 == "uninstall" ]]; then
+    uninstall "$2"
+fi
