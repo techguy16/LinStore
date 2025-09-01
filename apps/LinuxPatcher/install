@@ -1,0 +1,17 @@
+#!/bin/bash
+
+mkdir -p "$HOME/.techguy16"
+git clone https://github.com/techguy16/LinuxPatcher "$HOME/.techguy16/LinuxPatcher"
+
+chmod +x "$HOME/.techguy16/LinuxPatcher/gui"
+
+cat <<EOF >"$HOME/.local/share/applications/LinuxPatcher.desktop"
+[Desktop Entry]
+Name=LinuxPatcher
+Comment=Patch annoyances in Linux
+Exec=$HOME/.techguy16/LinuxPatcher/gui
+Type=Application
+Version=1.0
+Terminal=false
+Categories=Utility;System;
+EOF

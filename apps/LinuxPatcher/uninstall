@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf "$HOME/.techguy16/LinuxPatcher"
+rm -rf "$HOME/.local/share/applications/LinuxPatcher.desktop"
