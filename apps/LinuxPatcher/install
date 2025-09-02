@@ -2,6 +2,8 @@
 VERSION="SEP2"
 
 mkdir -p "$HOME/.techguy16"
+
+rm -rf "$HOME/.techguy16/LinuxPatcher"
 git clone https://github.com/techguy16/LinuxPatcher "$HOME/.techguy16/LinuxPatcher"
 
 chmod +x "$HOME/.techguy16/LinuxPatcher/gui"
