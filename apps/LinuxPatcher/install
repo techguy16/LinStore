@@ -1,4 +1,5 @@
 #!/bin/bash
+VERSION="SEP2"
 
 mkdir -p "$HOME/.techguy16"
 git clone https://github.com/techguy16/LinuxPatcher "$HOME/.techguy16/LinuxPatcher"
