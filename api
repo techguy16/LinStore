@@ -47,6 +47,12 @@ install_app() {
     echo "x-terminal-emulator -e './api logo && ./api info \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
 }
 
+get_installed_apps_from_piapps() {
+    find "$HOME/pi-apps/data/status" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' app; do
+        echo "\"$app\": $(cat "$app")"
+    done
+}
+
 open_app() {
     local app_directory="$1"
 
@@ -197,4 +203,6 @@ elif [[ $1 == "update" ]]; then
     update
 elif [[ $1 == "open" ]]; then
     open_app "$2"
+elif [[ $1 == "installed-piapps" ]]; then
+    get_installed_apps_from_piapps
 fi
