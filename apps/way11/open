@@ -1,0 +1,1 @@
+bash -c "cd $HOME/.techguy16/way11 && $HOME/.techguy16/way11/way11-gui"
