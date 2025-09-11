@@ -30,8 +30,8 @@ fi
 
 horizontal=$(echo $resolution | cut -d'x' -f1)
 vertical=$(echo $resolution | cut -d'x' -f2)
-let "categoryPos=$horizontal/2-360"
-let "categoryPosY=$vertical/2-340"
+let "categoryPos=$horizontal/2-385"
+let "categoryPosY=$vertical/2-320"
 
 declare -A categories
 declare -A category_apps
@@ -205,8 +205,8 @@ app_details_page() {
     kill $(pgrep -f "title=App Details") > /dev/null 2>&1
     sleep 0.1
     pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
-    x2=$((horizontal / 2 - 40))
-    y2=$((vertical / 2 - 340))
+    x2=$((horizontal / 2 - 65))
+    #y2=$((vertical / 2 - 300))
 
     if [ -e "$HOME/.linstore/installscripts/${1//|/}" ]; then
         installed="true"
@@ -262,7 +262,7 @@ app_details_page() {
     fi
 
     (
-        GDK_BACKEND=x11 $YAD_COMMAND --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${y2} --form \
+        GDK_BACKEND=x11 $YAD_COMMAND --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${categoryPosY} --form \
             --text "<big>${displayName}</big>\nBy <b>${creator}</b> (<a href='${website}'>App Website</a>)\n${donate}" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
             --button="$buttonText!$buttonImage:$buttonCommand" "${buttons[@]}" --skip-taskbar --noclose
