@@ -44,6 +44,20 @@ show_settings() {
     fi
     texteditors+="!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium"
 
+    accents=""
+    if [ -e "etc/accent" ]; then
+        ACCENT=$(cat etc/accent)
+        if [[ "$ACCENT" == "" ]]; then
+            accents+="Default!"
+        else
+            accents+="$ACCENT (currently selected)!"
+            accents+="Default!"
+        fi 
+    else
+        accents+="Default!"
+    fi
+    accents+="red!orangered!orange!yellow!limegreen!green!teal!lightblue!blue!purple!pink!grey"
+    
     import_piapps_file=$(cat "etc/pi-apps-import" 2>/dev/null)
     if [[ ! -f "./etc/pi-apps-import" ]]; then
         ./api error "etc/pi-apps-import does not exist"
@@ -69,10 +83,11 @@ show_settings() {
     # I don't know why these are around this way, and why they only work that way.
     settings=$(yad --form \
         --title="Settings" --columns=1 --output-by-row \
-        --width="150" --height="400" --center --borders=20 \
+        --width="300" --height="450" --center --borders=20 \
         --field="<big><b>LinStore Settings</b></big>":LBL "" \
         --field="<b>Theme</b>":CB "$theme_string" \
         --field="<b>Text Editor</b>":CB "$texteditors" \
+        --field="<b>Accent Colour</b>":CB "$accents" \
         --field="Show apps from Pi-Apps (if installed)":CHK "${import_piapps}" \
         --field="Express Updates":CHK "${express_updates}" \
         --field=":LBL" "" \
@@ -116,10 +131,16 @@ show_settings() {
             echo "$selected_theme_path" >"$THEMES_FILE"
         fi
 
-        import_from_piapps=$(echo "$fixed_settings" | awk -F '|' '{print $4}')
+        accent_colour=$(echo "$fixed_settings" | awk -F '|' '{print $4}' | sed -r 's/ \(currently selected\)//g')
+        case "$accent_colour" in
+            "Default") echo "green" >"etc/accent" ;;
+            *) echo "$accent_colour" >"etc/accent" ;;
+        esac
+
+        import_from_piapps=$(echo "$fixed_settings" | awk -F '|' '{print $5}')
         echo $import_from_piapps > "etc/pi-apps-import"
 
-        express_updates=$(echo "$fixed_settings" | awk -F '|' '{print $5}')
+        express_updates=$(echo "$fixed_settings" | awk -F '|' '{print $6}')
         echo $express_updates > "etc/express-updates"
         
         ./gui

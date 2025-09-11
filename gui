@@ -8,6 +8,8 @@ APP_STORE_HEIGHT=600
 YAD_COMMAND="yad"
 YAD_FLAGS=""
 
+ACCENT="green"
+
 #pwd
 if ! command -v "$YAD_COMMAND" &>/dev/null; then
     echo "YAD needs to be installed to run LinStore."
@@ -57,6 +59,12 @@ detect_and_write_architecture() {
     esac
 }
 
+if [ -e "etc/accent" ]; then
+    ACCENT="$(cat etc/accent)"
+    if [[ "$ACCENT" == "" ]]; then
+        ACCENT="green"
+    fi
+fi
 list_piapps() {
     piapps_file="etc/pi-apps-import"
     if [ -e "$piapps_file" ]; then
@@ -208,23 +216,24 @@ app_details_page() {
     x2=$((horizontal / 2 - 65))
     #y2=$((vertical / 2 - 300))
 
-    if [ -e "$HOME/.linstore/installscripts/${1//|/}" ]; then
-        installed="true"
-    else
-        installed="false"
-    fi
-
     TITLE="App Details"
     wmctrl -l | grep "$TITLE" | awk '{print $1}' | while read -r window_id; do
         wmctrl -ic "$window_id" > /dev/null 2>&1
     done
 
     local selected_app_name="${1//|/}"
+    selected_app_name=$(echo "$selected_app_name" | sed 's/<[^>]*>//g')
     local app_directory="apps/$selected_app_name"
     local app_icon="$app_directory/icon-48.png"
     local description=$(get_app_description "$selected_app_name")
     local creator=$(get_app_creator "$selected_app_name")
     local website=$(get_app_website "$selected_app_name")
+
+    if [ -e "$HOME/.linstore/installscripts/$selected_app_name" ]; then
+        installed="true"
+    else
+        installed="false"
+    fi
 
     local install_command=$(./api install "$app_directory" "$selected_app_name")
     local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
@@ -281,7 +290,11 @@ show_apps_in_category() {
                 if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ]; then
                     app_icon="apps/$app_name/icon-24.png"
                     formatted_apps+=("$app_icon")
-                    formatted_apps+=("$app_name")
+                    if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
+                        formatted_apps+=("<span fgcolor=\"$ACCENT\">$app_name</span>")
+                    else
+                        formatted_apps+=("$app_name")
+                    fi
                 fi
             done
         else
@@ -293,14 +306,18 @@ show_apps_in_category() {
             for app in "${app_list[@]}"; do
                 app_icon="apps/$app/icon-24.png"
                 formatted_apps+=("$app_icon")
-                formatted_apps+=("$app")
+                if [ -e "$HOME/.linstore/installscripts/$app" ]; then
+                    formatted_apps+=("<span fgcolor=\"$ACCENT\">$app</span>")
+                else
+                    formatted_apps+=("$app")
+                fi
             done
         fi
 
         GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$title</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" \
-                --button="Back"!images/button/back.png!:4 --separator="\n" "${formatted_apps[@]}" --no-headers \
-                --select-action='bash -c "./gui showdetails \"%s\""' > /dev/null 2>&1
+                --button="Back"!images/button/back.png!:4 --separator="\n" --markup "${formatted_apps[@]}" --no-headers \
+                --css="span{fgcolor:green;}" --select-action='bash -c "./gui showdetails \"%s\""'#> /dev/null 2>&1
 
         button_clicked=$?
         if [ $button_clicked -eq 4 ]; then
