@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf "$HOME/.local/share/applications/way11.desktop"
+rm -rf "$HOME/.techguy16/way11"

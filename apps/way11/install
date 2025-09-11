@@ -1,0 +1,22 @@
+#!/bin/bash
+
+sudo apt update
+sudo apt install weston yad wmctrl x11-utils -y
+
+git clone https://github.com/techguy16/way11 "$HOME/.techguy16/way11"
+chmod +x "$HOME/.techguy16/way11/way11"
+chmod +x "$HOME/.techguy16/way11/way11-gui"
+
+desktop_file="$HOME/.local/share/applications/way11.desktop"
+cat << EOF >"$desktop_file"
+[Desktop Entry]
+Name=way11
+Comment= Run Wayland-only apps on X11
+Exec=$HOME/.techguy16/way11/way11-gui
+Type=Application
+Version=1.0
+Terminal=false
+StartupWMClass=way11
+Icon=$HOME/.techguy16/way11/assets/logo.png
+Categories=Utility;System;
+EOF

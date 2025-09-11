@@ -1,0 +1,1 @@
+Run Wayland-only apps on X11. \n\nHow?\nWeston (a Wayland compositor) can run in a windowed form, which allows us to run apps like they're natively running on X11. way11\n\nWhy?\nThere are many apps for Linux now that are Wayland-only, and as an (ancient) NVIDIA card user, these apps simply don't work for me.
