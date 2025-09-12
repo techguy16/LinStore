@@ -1,0 +1,14 @@
+#!/bin/bash
+
+sudo apt install curl lsb-release ca-certificates -y
+if [[ "$(cat /proc/device-tree/model)" == "Raspberry Pi"* ]]; then
+    sudo echo "psi=1" >> /boot/firmware/cmdline.txt
+fi
+
+sudo curl -Sf https://repo.waydro.id/waydroid.gpg --output /usr/share/keyrings/waydroid.gpg
+echo "deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/waydroid.list
+
+sudo apt update
+sudo apt install waydroid -y
+
+sudo waydroid init -f -s GAPPS # Install with G-Apps support

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo apt remove waydroid -y
+sudo rm -rf /etc/apt/sources.list.d/waydroid.list
