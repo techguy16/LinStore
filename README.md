@@ -78,3 +78,16 @@ LinStore has the ability to install non-package apps from Pi-Apps. <br><br>To do
 <br><br>
 <code>install_package</code> and <code>remove_package</code> are separate scripts, unlike Pi-Apps which uses a large script (<code>manage</code>) for everything.
 
+### LinStore badges
+
+If you have an app listed on LinStore, consider adding a badge to your README to show appreciation!
+
+[<img src='https://github.com/techguy16/LinStore/blob/main/images/badge.png?raw=true' align=right height=50>](https://github.com/techguy16/LinStore)
+```markdown
+[<img src='https://github.com/techguy16/LinStore/blob/main/images/badge.png?raw=true' align=right>](https://github.com/techguy16/LinStore)
+```
+
+[<img src='https://github.com/techguy16/LinStore/blob/main/images/badge-light.png?raw=true' align=right height=50>](https://github.com/techguy16/LinStore)
+```markdown
+[<img src='https://github.com/techguy16/LinStore/blob/main/images/badge-light.png?raw=true' align=right>](https://github.com/techguy16/LinStore)
+```
