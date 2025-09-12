@@ -7,7 +7,7 @@
     <a href="https://github.com/techguy16/LinStore/stargazers"><img src="https://img.shields.io/github/stars/techguy16/LinStore"></a>
     <a href="https://github.com/techguy16/LinStore/network/members"><img src="https://img.shields.io/github/forks/techguy16/LinStore"></a>
     <a href="https://github.com/techguy16/LinStore/pulls"><img src="https://img.shields.io/github/issues-pr/techguy16/LinStore"></a>
-    <a href="https://github.com/techguy16/LinStore/issues?q=is%3Aopen"><img src="https://img.shields.io/github/issues/techguy16/LinStore">
+    <a href="https://github.com/techguy16/LinStore/issues?q=is%3Aopen"><img src="https://img.shields.io/github/issues/techguy16/LinStore"></a>
 </p>
 
 <p align="center">
