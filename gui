@@ -139,7 +139,6 @@ read_categories() {
     done
 }
 
-
 get_app_description() {
     app_name="$1"
     description_file="apps/$app_name/description"
