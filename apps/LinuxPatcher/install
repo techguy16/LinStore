@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="SEP2"
+VERSION="2861b4e99f492f5bbbd02f0a8a2d2b663dfe90cf"
 
 mkdir -p "$HOME/.techguy16"
 
