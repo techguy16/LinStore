@@ -2,7 +2,7 @@ name: Update apps
 
 on:
   schedule:
-    - cron: '40 13 * * *'
+    - cron: "0 0,12 * * *"
   workflow_dispatch:
 
 jobs:
