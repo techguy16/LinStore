@@ -1,1 +1,0 @@
-LinuxPatcher, Visual Studio Code
