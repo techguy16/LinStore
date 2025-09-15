@@ -1,0 +1,1 @@
+curl -s https://api.github.com/repos/prismlauncher/PrismLauncher/releases/latest | grep ".AppImage\"" | grep "browser_download_url" | awk '{print $2}' | awk -F"/" '{print $8}'
