@@ -17,7 +17,7 @@ jobs:
 
     - name: Run update checker
       run: |
-        bash tools/updates.sh
+        bash etc/tools/updates.sh
 
     - name: Commit changes
       run: |

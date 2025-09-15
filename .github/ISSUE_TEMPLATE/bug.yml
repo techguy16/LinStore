@@ -35,7 +35,7 @@ body:
     id: os
     attributes:
       label: What are the specs of your system (run the following command in your terminal)?
-      description: ~/.linstore/tools/sysinfo.sh
+      description: ~/.linstore/etc/tools/sysinfo.sh
       placeholder: |
         System Information:
         -------------------

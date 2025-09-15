@@ -91,7 +91,7 @@ if [ ! -e /usr/local/bin/install_package ]; then
     sudo mkdir -p /usr/local/bin
     # Copy files to /usr/local/bin
     information "Copying executable files to /usr/local/bin..."
-    sudo cp "$install_dir"/tools/*_package /usr/local/bin/
+    sudo cp "$install_dir"/etc/tools/*_package /usr/local/bin/
 fi
 
 # Create a desktop shortcut for GUI
