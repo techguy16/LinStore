@@ -114,7 +114,7 @@ check_for_updates() {
     else
         kill $(pgrep -f "title=App Details") > /dev/null 2>&1
         updates_list=$(GDK_BACKEND=x11 yad --list --class="LinStore" --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --hide-header "${buttons[@]}")
+            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --no-header "${buttons[@]}") #i regret programming
         response=$?
     fi
 

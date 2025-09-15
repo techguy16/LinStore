@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [[ $(xrandr --current) =~ "connected primary" ]]; then
+    resolution=$(xrandr --current | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
+else
+    resolution=$(xrandr --current | grep " connected" | awk '{print $3}' | cut -d'+' -f1)
+fi
+
+horizontal=$(echo $resolution | cut -d'x' -f1)
+vertical=$(echo $resolution | cut -d'x' -f2)
 
 theme_get() {
     website_file="etc/theme"
@@ -116,6 +124,9 @@ uninstall_app() {
 
 # Function to search for apps
 search_apps() {
+    x2=$((horizontal / 2 - 65))
+    y2=$((vertical / 2 - 320))
+
     query=$(GTK_THEME="${theme}" yad --title="Search Apps" --borders=10 --center --text="Enter query:" --entry \
             --button="Cancel!gtk-cancel":1 --button="Search!edit-find":0)
     if [ -n "$query" ]; then
@@ -136,15 +147,16 @@ search_apps() {
         done
 
         if [ ${#apps_found[@]} -gt 0 ]; then
-            selected_category2=$(GTK_THEME="${theme}" yad --center --title="Search Results" --width=400 --height=300 \
-            --list --text="<big><b>Search Results for '${query}'</b></big>" --column="Icon:IMG" --column="App Name" --column="in" --column="Category" --no-headers "${apps_found[@]}" --borders=10 --button="Exit!gtk-cancel":1 --button="View App!edit-find":0)
+            selected_category2=$(GTK_THEME="${theme}" yad --center --title="Search Results" --geometry=450x600+${x2}+${y2} \
+            --list --text="<big><b>Search Results for '${query}'</b></big>" --column="Icon:IMG" --column="App Name" \
+            --column="in" --column="Category" --no-headers "${apps_found[@]}" --button="Exit!gtk-cancel":1 --button="View App!edit-find":0 &)
             if [ -n "$selected_category2" ]; then
                 echo "$(echo ${selected_category2} | awk -F"|" '{print $2}' | sed 's/|//g')" > /tmp/tmpname
-                ./gui showdetails
+                ./gui showdetails &
             fi
         else
-            GTK_THEME="${theme}" yad --center --title="Search Results" --width=300 --height=100 \
-            --text="<big><b>No apps found for '${query}'.</b></big>\nPlease try another query." --borders=10 --center \
+            GTK_THEME="${theme}" yad --center --title="Search Results" --geometry=450x600+${x2}+${y2} \
+            --text="<big><b>No apps found for '${query}'.</b></big>\nPlease try another query." --center \
             --button="Retry!edit-find":1 --button="Exit!gtk-cancel":0
             response=$?
             if [ $response -eq 1 ]; then

@@ -273,7 +273,7 @@ app_details_page() {
         GDK_BACKEND=x11 $YAD_COMMAND --class LinStore --title="App Details" --geometry=450x${APP_STORE_HEIGHT}+${x2}+${categoryPosY} --form --class="LinStore" \
             --text "<big>${displayName}</big>\nBy <b>${creator}</b> (<a href='${website}'>App Website</a>)\n${donate}" \
             --field="<b>Description</b>:TXT" --no-edit "$description" --image="$app_icon" --window-icon="images/logo/logo-64.png" --image-on-top \
-            --button="$buttonText!$buttonImage:$buttonCommand" "${buttons[@]}" --skip-taskbar --noclose
+            --button="$buttonText!$buttonImage:$buttonCommand" "${buttons[@]}" --skip-taskbar --noclose &
     )
 
     rm -f /tmp/description.tmp
@@ -316,7 +316,7 @@ show_apps_in_category() {
         GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$title</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
                 --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" --class="LinStore" \
                 --button="Back"!images/button/back.png!:4 --separator="\n" --markup "${formatted_apps[@]}" --no-headers \
-                --css="span{fgcolor:green;}" --select-action='bash -c "./gui showdetails \"%s\""'#> /dev/null 2>&1
+                --css="span{fgcolor:green;}" --select-action='bash -c "./gui showdetails \"%s\"" &'#> /dev/null 2>&1
 
         button_clicked=$?
         if [ $button_clicked -eq 4 ]; then
@@ -351,9 +351,13 @@ show_app_store() {
 
     # Search function
 
-    selected_category_raw=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
+    selected_category_raw=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" \
+        --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
         "${list_items[@]}" --class="LinStore" \
-        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search'" --button "!images/button/update.png"!"Updates":"bash -c './update'" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
+        --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" \
+        --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search' &" \
+        --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings' &" \
+        --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
     exval=$?
     ./api info "Exit value: ${exval}"
     selected_category="${selected_category_raw//|/}"
@@ -365,7 +369,7 @@ show_app_store() {
     elif [ "$exval" -eq "252" ]; then
         pkill -f "yad*" > /dev/null 2>&1
     elif [ -n "$selected_category" ]; then
-        show_apps_in_category "$selected_category"
+        show_apps_in_category "$selected_category" &
     fi
 }
 

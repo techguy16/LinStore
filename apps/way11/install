@@ -4,6 +4,7 @@ VERSION="02a5fddf88669d7e513527d9b336df54853d9bbc"
 sudo apt update
 sudo apt install weston yad wmctrl x11-utils -y
 
+rm -rf "$HOME/.techguy16/way11"
 git clone https://github.com/techguy16/way11 "$HOME/.techguy16/way11"
 chmod +x "$HOME/.techguy16/way11/way11"
 chmod +x "$HOME/.techguy16/way11/way11-gui"
