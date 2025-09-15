@@ -131,15 +131,15 @@ search_apps() {
                 app_icon="apps/$app_name/icon-24.png"
                 app_category_file="$app/category"
                 app_category=$(head -n 1 "$app_category_file")
-                apps_found+=("$app_icon" "$app_name")
+                apps_found+=("$app_icon" "$app_name" "in" "$app_category")
             fi
         done
 
         if [ ${#apps_found[@]} -gt 0 ]; then
             selected_category2=$(GTK_THEME="${theme}" yad --center --title="Search Results" --width=400 --height=300 \
-            --list --text="<big><b>Search Results for '${query}'</b></big>" --column="Icon:IMG" --column="App Name" "${apps_found[@]}" --borders=10 --button="Exit!gtk-cancel":1 --button="View App!edit-find":0)
+            --list --text="<big><b>Search Results for '${query}'</b></big>" --column="Icon:IMG" --column="App Name" --column="in" --column="Category" --no-headers "${apps_found[@]}" --borders=10 --button="Exit!gtk-cancel":1 --button="View App!edit-find":0)
             if [ -n "$selected_category2" ]; then
-                echo "$(echo ${selected_category2} | sed 's/|//g')" > /tmp/tmpname
+                echo "$(echo ${selected_category2} | awk -F"|" '{print $2}' | sed 's/|//g')" > /tmp/tmpname
                 ./gui showdetails
             fi
         else
