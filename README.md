@@ -49,6 +49,7 @@ chmod +x install
 
 ### Launching LinStore
 To launch LinStore:
+- **In all desktop environments**: Double-click the desktop icon named "LinStore"
 - **In GNOME**: Find LinStore in your dash
 - **Other desktop environments**: Find LinStore in the "System" or "System Tools" category of your launcher
 

@@ -83,6 +83,7 @@ mkdir -p "$install_dir"
 cp -r "$temp_dir"/* "$install_dir"
 cd "$install_dir"
 chmod +x *
+chmod +x "gui"
 rm -rf "$temp_dir"  # Clean up temporary directory
 
 # Create a bin directory if it doesn't exist
@@ -95,9 +96,11 @@ if [ ! -e /usr/local/bin/install_package ]; then
 fi
 
 # Create a desktop shortcut for GUI
-desktop_file="$HOME/.local/share/applications/LinStore.desktop"
-information "Creating desktop shortcut..."
-cat <<EOF >"$desktop_file"
+information "Creating desktop shortcuts..."
+
+desktop_file=("$HOME/.local/share/applications/LinStore.desktop" "$HOME/Desktop/LinStore.desktop")
+for desktop_file in "${desktop_file[@]}"; do
+    cat <<EOF >"$desktop_file"
 [Desktop Entry]
 Name=LinStore
 Comment=The lightest and fastest Linux app store.
@@ -109,6 +112,7 @@ StartupWMClass=LinStore
 Icon=$HOME/.linstore/images/logo/logo.png
 Categories=Utility;System;PackageManager;
 EOF
+done
 
 information "Cleaning up cached files..."
 rm -rf "$HOME/.linstore/tmp/"
