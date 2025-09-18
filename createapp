@@ -115,6 +115,7 @@ create_new_app_pane() {
     icon_file=$(echo "$assets_data" | awk -F '|' '{print $2}')
     if [ -n "$icon_file" ]; then
         cp "$icon_file" "$app_directory/icon-original.png"
+        convert "$icon_file" -resize 64x64 "$app_directory/icon-64.png" 
         convert "$icon_file" -resize 48x48 "$app_directory/icon-48.png"
         convert "$icon_file" -resize 24x24 "$app_directory/icon-24.png"
         convert "$icon_file" -resize 16x16 "$app_directory/icon-16.png"
