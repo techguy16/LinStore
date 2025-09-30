@@ -1,2 +1,2 @@
-VERSION=0.10.7
+VERSION=0.10.8
 install_package https://launcher-files.modrinth.com/${VERSION}/0.10.7/linux/Modrinth%20App_${VERSION}_amd64.deb
