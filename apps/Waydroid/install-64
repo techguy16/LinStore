@@ -5,9 +5,6 @@ if [[ "$(cat /proc/device-tree/model)" == "Raspberry Pi"* ]]; then
     sudo echo "psi=1" >> /boot/firmware/cmdline.txt
 fi
 
-sudo curl -Sf https://repo.waydro.id/waydroid.gpg --output /usr/share/keyrings/waydroid.gpg
-echo "deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/waydroid.list
-
 # Modified from https://github.com/waydroid/waydroid/issues/214#issuecomment-1120926304
 sudo apt install build-essential cdbs devscripts equivs fakeroot \
   git git-buildpackage git-lfs libgbinder-dev -y
@@ -26,6 +23,9 @@ sudo debuild -b -uc -us
 sudo apt install -f -y ../*.deb
 sudo rm -rf /usr/bin/build_changelog
 ########################################################################################
+
+sudo curl -Sf https://repo.waydro.id/waydroid.gpg --output /usr/share/keyrings/waydroid.gpg
+echo "deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/waydroid.list
 
 sudo apt update
 sudo apt install waydroid -y
