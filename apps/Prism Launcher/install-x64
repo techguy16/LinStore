@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=9.4
+VERSION=
 
 mkdir $HOME/.local
 cd $HOME/.local
