@@ -1,1 +1,1 @@
-curl -s https://corsproxy.io/?url=https://api.github.com/repos/modrinth/code/releases/latest | grep "\"name\"" | awk '{print $2}' | sed 's/\"v//' | sed 's/"\,//'
+curl -s https://api.github.com/repos/modrinth/code/releases/latest | grep "\"name\"" | awk '{print $2}' | sed 's/\"v//' | sed 's/"\,//'

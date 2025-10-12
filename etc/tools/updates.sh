@@ -34,3 +34,5 @@ for dir in "$APPS_DIR"/*/; do
         fi
     done
 done
+
+curl -s https://api.github.com/repos/prismlauncher/PrismLauncher/releases/latest
