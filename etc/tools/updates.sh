@@ -35,4 +35,6 @@ for dir in "$APPS_DIR"/*/; do
     done
 done
 
-curl -s https://api.github.com/repos/prismlauncher/PrismLauncher/releases/latest
+curl -s https://api.github.com/repos/microsoft/vscode/releases/latest
+curl -s https://api.github.com/repos/betterscratch/desktop/releases/latest 
+curl -s https://api.github.com/repos/modrinth/code/releases/latest
