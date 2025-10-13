@@ -8,33 +8,28 @@ for dir in "$APPS_DIR"/*/; do
     folder_name=$(basename "$dir")
     for install_file in "$dir"/install*; do
         [[ -f "$install_file" ]] || continue
-        old_version=$(grep -E '^VERSION=' "$install_file" | cut -d'=' -f2 | sed 's/"//g')
-        if [[ ! -z "$old_version" ]]; then
-            workflow_script="$WORKFLOWS_DIR/$folder_name.sh"
-            workflow_script=$(echo "$workflow_script" | tr ' ' '\ ')
+        old_version=$(cat "$install_file" | grep 'VERSION=' | cut -d'=' -f2 | head -n1 | sed 's/"//g')
+        workflow_script="$WORKFLOWS_DIR/$folder_name.sh"
+        workflow_script=$(echo "$workflow_script" | tr ' ' '\ ')
 
-            if [ -e "$workflow_script" ]; then
-                new_version=$(bash "$workflow_script" 2>/dev/null || echo "$old_version")
-            else
-                new_version="$old_version"
-            fi
+        if [ -e "$workflow_script" ]; then
+            new_version=$(bash "$workflow_script" || echo "$old_version")
+        else
+            new_version="$old_version"
+        fi
 
-            if [[ "$new_version" == "$old_version" ]]; then
-                ./api info "No update required for $folder_name"
-            else
-                ./api info "$folder_name - $(basename "$install_file"): old version=$old_version, new version=$new_version"
-                if [ ! -e updates_list.txt ]; then
-                    echo -n "$folder_name" >> updates_list.txt
-                elif ! grep "$folder_name" updates_list.txt &>/dev/null; then
-                    echo -n ", $folder_name" >> updates_list.txt
-                fi
-                sed -i "s/VERSION=${old_version}/VERSION=${new_version}/" "$install_file"
-                sed -i "s/VERSION=\"$old_version\"/VERSION=\"$new_version\"/" "$install_file"
+        if [[ "$new_version" == "$old_version" ]]; then
+            ./api info "$folder_name - $(basename "$install_file"): old version=$old_version, new version=$new_version"
+            ./api info "No update required for $folder_name"
+        else
+            ./api info "$folder_name - $(basename "$install_file"): old version=$old_version, new version=$new_version"
+            if [ ! -e updates_list.txt ]; then
+                echo -n "$folder_name" >> updates_list.txt
+            elif ! grep "$folder_name" updates_list.txt &>/dev/null; then
+                echo -n ", $folder_name" >> updates_list.txt
             fi
+            sed -i "s/VERSION=${old_version}/VERSION=${new_version}/" "$install_file"
+            sed -i "s/VERSION=\"$old_version\"/VERSION=\"$new_version\"/" "$install_file"
         fi
     done
 done
-
-curl -s https://api.github.com/repos/microsoft/vscode/releases/latest
-curl -s https://api.github.com/repos/betterscratch/desktop/releases/latest 
-curl -s https://api.github.com/repos/modrinth/code/releases/latest
