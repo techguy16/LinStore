@@ -1,4 +1,4 @@
 #!/bin/bash
-VERSION="144.0-1"
+VERSION="144.0.2-1"
 
 install_package https://gitlab.com/api/v4/projects/44042130/packages/generic/librewolf/${VERSION}/librewolf-${VERSION}-linux-i686-deb.deb
