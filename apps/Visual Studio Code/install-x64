@@ -1,2 +1,2 @@
-VERSION=1.107.0
+VERSION=
 install_package https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64
