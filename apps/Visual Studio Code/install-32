@@ -1,2 +1,2 @@
-VERSION=
+VERSION=2025
 install_package https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-armhf
