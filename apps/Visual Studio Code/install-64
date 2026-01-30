@@ -1,2 +1,2 @@
-VERSION=2025
+VERSION=1.108.2
 install_package https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-arm64
