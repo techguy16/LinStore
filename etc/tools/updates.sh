@@ -14,6 +14,9 @@ for dir in "$APPS_DIR"/*/; do
 
         if [ -e "$workflow_script" ]; then
             new_version=$(bash "$workflow_script" || echo "$old_version")
+            if [[ -z "$new_version" ]]; then
+                new_version="$old_version"
+            fi
         else
             new_version="$old_version"
         fi
