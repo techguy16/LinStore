@@ -1,11 +1,14 @@
 #!/bin/bash
-VERSION=3.4.9
+VERSION=3.6.6
 
 mkdir $HOME/.local
 cd $HOME/.local
 
+echo "Deleting old Lunar Client versions"
+rm -r $HOME/.local/LunarClient*.AppImage
+
 echo "Downloading Lunar Client"
-wget https://launcherupdates.lunarclientcdn.com/Lunar%20Client-${VERSION}.AppImage -O $HOME/.local/LunarClient-${VERSION}.AppImage
+wget https://launcherupdates.lunarclientcdn.com/Lunar%20Client-${VERSION}-ow.AppImage -O $HOME/.local/LunarClient-${VERSION}.AppImage
 
 mkdir $HOME/.local/lunarassets
 
