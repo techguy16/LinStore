@@ -211,7 +211,7 @@ multi_install() {
 app_details_page() {
     kill $(pgrep -f "title=App Details") > /dev/null 2>&1
     sleep 0.1
-    pos=$(wmctrl -lG | grep "LinStore" | awk '{print $3,$4}')
+    pos=$(wmctrl -lG | grep "LinStore$" | awk '{print $3,$4}')
     x2=$((horizontal / 2 - 65))
     #y2=$((vertical / 2 - 300))
 
