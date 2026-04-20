@@ -1,4 +1,4 @@
 #!/bin/bash
-OLD_VERSION="146.0.1-1"
+OLD_VERSION="149.0.2-2"
 
 install_package https://gitlab.com/api/v4/projects/44042130/packages/generic/librewolf/${OLD_VERSION}/librewolf-${OLD_VERSION}-linux-i686-deb.deb
