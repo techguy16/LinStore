@@ -1,4 +1,4 @@
 #!/bin/bash
-VERSION="150.0-1"
+VERSION="150.0.1-1"
 
 install_package https://dl.librewolf.net/librewolf/${VERSION}/librewolf-${VERSION}-linux-arm64-deb.deb
