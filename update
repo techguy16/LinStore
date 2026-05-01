@@ -1,147 +1,249 @@
 #!/bin/bash
 
-if [[ $(xrandr --current) =~ "connected primary" ]]; then
-    resolution=$(xrandr --current | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
-else
-    resolution=$(xrandr --current | grep " connected" | awk '{print $3}' | cut -d'+' -f1)
-fi
+set -euo pipefail
+readonly REPO_URL="https://github.com/techguy16/linstore"
+readonly LINSTORE_DIR="$HOME/.linstore"
+readonly INSTALL_SCRIPTS_DIR="$LINSTORE_DIR/installscripts"
+readonly APPS_DIR="$LINSTORE_DIR/apps"
+readonly TMP_DIR="$LINSTORE_DIR/tmp"
+readonly BACKUP_DIR="$LINSTORE_DIR/backup"
+readonly LOG_FILE="$LINSTORE_DIR/linstore.log"
+readonly TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
-horizontal=$(echo $resolution | cut -d'x' -f1)
-vertical=$(echo $resolution | cut -d'x' -f2)
+log() {
+    local level="$1"
+    shift
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $*" >> "$LOG_FILE"
+}
 
-check_for_updates() {
-    #kill $(pgrep -f "title=App Details")
-    local repository_path="./apps"
-    local installed_scripts_path="$HOME/.linstore/installscripts"
-    local updates=()
+cleanup() {
+    log INFO "Cleaning up temporary files"
+    rm -rf "$TMP_DIR"
+    pgrep -f "yad.*Checking for app updates" | xargs -r kill 2>/dev/null || true
+}
 
-    mkdir -p "$installed_scripts_path"
+trap cleanup EXIT
 
-    # Show progress dialog
-    (
-        echo "# Checking for updates"
-        sleep 1
-
-        # Clean up previous installation
-        rm -rf ~/.linstore/tmp
-        echo "# Cloning repository"
-        git clone https://github.com/techguy16/linstore ~/.linstore/tmp > /dev/null 2>&1
-        sleep 1
-
-        echo "# Moving new app installation scripts"
-        rm -rf ./apps
-        mv ~/.linstore/tmp/apps ./apps
-        sleep 1
-
-        # Clean up
-        # rm -rf ~/.linstore/tmp
-        echo "# Finished"
-    ) | yad --center --title "Updater" --text "Checking for app updates" --progress --pulsate --width=300 --height=75 \
-        --enable-log="Log" --log-expanded --auto-kill --borders=10 --auto-close --no-buttons
-
-    # check for LinStore updates
-
-    local fileupdates=""
-    for file in gui api createapp settings update; do
-        if diff "./$file" "$HOME/.linstore/tmp/$file" > /dev/null 2>&1; then
-            ./api info "No updates available for $file"
-        else
-            ./api warning "Update available for $file"
-            fileupdates+="$file, "
-        fi
-    done
-
-    if [ "$fileupdates" != "" ]; then
-        updates+=(TRUE "images/logo/logo-16.png" "<b>LinStore</b> ($(echo $fileupdates | sed 's/[[:space:]]*$//'  | sed 's/,$//'))")
-    fi
-
-    for installed_script in "$installed_scripts_path"/*; do
-        app_name=$(basename "$installed_script")
-
-        # Ignore specific files
-        if [[ "$app_name" == "test" ]]; then
-            continue
-        fi
-
-        app_directory="$repository_path/$app_name"
-        app_script=$(./api whatscript "$app_directory" "$app_name")
-        script="$app_directory/$app_script"
-
-        if [ -d "$app_directory" ]; then
-            needs_update=true
-            if [ -e "$script" ]; then
-                if diff -q "$installed_script" "$script" >/dev/null; then
-                    needs_update=false
-                fi
-            fi
-
-            if $needs_update; then
-                icon_path="$app_directory/icon-16.png"
-                updates+=(TRUE "$icon_path" "$app_name")
-            fi
-        # unneeded - linstore is useless without the app directory
-        #else
-        #    updates+=(FALSE "" "$app_name (No directory found)")
-        fi
-    done
-	
-    buttons=()
-    buttons_noupd=()
-    pos=$(wmctrl -lG | grep "LinStore$" | awk '{print $3,$4}')
-    if xdotool search --name "^LinStore$" >/dev/null 2>&1; then
-    	./api info "Running with LinStore GUI open"
-        buttons+=("--button=Recheck Updates!edit-find:2")
-    	buttons+=("--button=<b>Update Selected</b>:0")
-        buttons_noupd+=("--button=Recheck Updates!edit-find:2")
-        buttons_noupd+=("--button=Finish!go-next:3")
-    	x2=$((horizontal / 2 - 65))
+get_resolution() {
+    local xrandr_output
+    xrandr_output=$(xrandr --current)
+    
+    if [[ "$xrandr_output" =~ "connected primary" ]]; then
+        echo "$xrandr_output" | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1
     else
-    	./api info "Running without LinStore open"
-    	buttons+=("--button=Return to LinStore!edit-undo:1")
-        buttons+=("--button=Recheck Updates!edit-find:2")
-        buttons+=("--button=<b>Update Selected</b>!view-refresh:0")
-        buttons_noupd+=("--button=Return to LinStore!edit-undo:1")
-        buttons_noupd+=("--button=Recheck Updates!edit-find:2")
-        buttons_noupd+=("--button=Finish!go-next:3")
-    	x2=$((horizontal / 2 - 265))
-    fi
-    y2=$((vertical / 2 - 320))
-
-    if [ ${#updates[@]} -eq 0 ]; then
-        kill $(pgrep -f "title=App Details") > /dev/null 2>&1
-        GDK_BACKEND=x11 yad --info --class="LinStore" --title="LinStore Updates" --text="<big><b>All apps are up to date!</b></big>" --text-align=center --geometry=450x600+${x2}+${y2} "${buttons_noupd[@]}"
-        response=$?
-    else
-        kill $(pgrep -f "title=App Details") > /dev/null 2>&1
-        updates_list=$(GDK_BACKEND=x11 yad --list --class="LinStore" --title="LinStore Updates" --column="Select":CHK --column="Icon":IMG --column="App" \
-            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --no-header "${buttons[@]}") #i regret programming
-        response=$?
-    fi
-
-    if [ $response -eq 0 ]; then
-        IFS=$'\n' read -d '' -r -a selected_apps <<<"$updates_list"
-
-        for selected in "${selected_apps[@]}"; do
-            if [[ "$selected" == TRUE* ]]; then
-                app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
-                echo "Updating selected: $app_name"
-                if [[ "$(echo $app_name | awk -F" " '{print $1}')" == "LinStore" ]]; then
-                        bash -c "x-terminal-emulator -e './api update'"
-                else
-                    ./api info "Updating app: $app_name"
-                    app_directory="$repository_path/$app_name"
-                    install=$(./api install "$app_directory" "$app_name")
-                    bash -c "${install}"
-                fi
-            fi
-        done
-        ./update
-    elif [ $response -eq 1 ]; then
-        ./gui
-    elif [ $response -eq 2 ]; then
-        ./update
+        echo "$xrandr_output" | grep " connected" | head -1 | awk '{print $3}' | cut -d'+' -f1
     fi
 }
 
-# Call the function
+validate_environment() {
+    local dirs=("$LINSTORE_DIR" "$INSTALL_SCRIPTS_DIR" "$APPS_DIR" "$BACKUP_DIR")
+    
+    for dir in "${dirs[@]}"; do
+        mkdir -p "$dir" || {
+            log ERROR "Failed to create directory: $dir"
+            exit 1
+        }
+    done
+    
+    local deps=("yad" "git" "xrandr" "wmctrl" "xdotool")
+    local missing=()
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &>/dev/null; then
+            missing+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        yad --error --title="Missing Dependencies" --text="Please install: ${missing[*]}" --center
+        exit 1
+    fi
+}
+
+clone_repository() {
+    log INFO "Cloning repository"
+    rm -rf "$TMP_DIR"
+    
+    if ! git clone --depth 1 "$REPO_URL" "$TMP_DIR" 2>/dev/null; then
+        log ERROR "Failed to clone repository"
+        yad --error --title="Error" --text="Failed to fetch updates. Check internet connection." --center
+        exit 1
+    fi
+}
+
+# Prevent data loss by backing up before any changes
+backup_current_files() {
+    local backup_path="$BACKUP_DIR/$TIMESTAMP"
+    mkdir -p "$backup_path"
+    
+    local files=("gui" "api" "createapp" "settings" "update")
+    for file in "${files[@]}"; do
+        if [[ -f "./$file" ]]; then
+            cp "./$file" "$backup_path/"
+        fi
+    done
+    
+    if [[ -d "$APPS_DIR" ]]; then
+        cp -r "$APPS_DIR" "$backup_path/apps"
+    fi
+    
+    log INFO "Backup created at $backup_path"
+}
+
+# Update LinStore core files, preserve only if diff exists
+apply_linstore_updates() {
+    local files=("gui" "api" "createapp" "settings" "update")
+    local updates_found=false
+    
+    for file in "${files[@]}"; do
+        if [[ -f "$TMP_DIR/$file" ]] && [[ -f "./$file" ]]; then
+            if ! diff -q "./$file" "$TMP_DIR/$file" >/dev/null 2>&1; then
+                log INFO "Update available for $file"
+                updates_found=true
+            fi
+        fi
+    done
+    
+    $updates_found
+}
+
+check_app_updates() {
+    local updates=()
+    
+    for installed_script in "$INSTALL_SCRIPTS_DIR"/*; do
+        [[ -f "$installed_script" ]] || continue
+        
+        app_name=$(basename "$installed_script")
+        [[ "$app_name" == "test" ]] && continue
+        
+        app_directory="$APPS_DIR/$app_name"
+        
+        if [[ -d "$app_directory" ]]; then
+            app_script=$(./api whatscript "$app_directory" "$app_name")
+            script="$app_directory/$app_script"
+            
+            if [[ -f "$script" ]] && ! diff -q "$installed_script" "$script" >/dev/null 2>&1; then
+                icon_path="$app_directory/icon-16.png"
+                [[ ! -f "$icon_path" ]] && icon_path=""
+                updates+=(TRUE "$icon_path" "$app_name")
+            fi
+        fi
+    done
+    
+    # Return array size for empty check
+    echo "${#updates[@]}"
+    printf '%s\n' "${updates[@]}"
+}
+
+get_window_position() {
+    local x2 y2
+    local pos
+    pos=$(wmctrl -lG | grep "LinStore$" | awk '{print $3,$4}')
+    
+    if xdotool search --name "^LinStore$" >/dev/null 2>&1; then
+        x2=$((horizontal / 2 - 65))
+    else
+        x2=$((horizontal / 2 - 265))
+    fi
+    
+    y2=$((vertical / 2 - 320))
+    echo "$x2 $y2"
+}
+
+# Parse update list output from yad, handling LinStore updates specially
+process_selected_updates() {
+    local updates_list="$1"
+    local selected_apps=()
+    IFS=$'\n' read -d '' -r -a selected_apps <<<"$updates_list"
+    
+    for selected in "${selected_apps[@]}"; do
+        if [[ "$selected" == TRUE* ]]; then
+            app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
+            
+            if [[ "$(echo "$app_name" | awk -F" " '{print $1}')" == "LinStore" ]]; then
+                # LinStore update requires terminal for self-update
+                x-terminal-emulator -e './api update'
+            else
+                log INFO "Updating app: $app_name"
+                local install_cmd
+                install_cmd=$(./api install "$APPS_DIR/$app_name" "$app_name")
+                bash -c "${install_cmd}"
+            fi
+        fi
+    done
+}
+
+# Main update logic
+check_for_updates() {
+    validate_environment
+    backup_current_files
+    clone_repository
+    
+    # Progress dialog with actual progress tracking
+    (
+        echo "10" ; echo "# Checking for updates"
+        sleep 0.5
+        echo "50" ; echo "# Scanning installed apps"
+        
+        local update_data
+        update_data=$(check_app_updates)
+        local update_count
+        update_count=$(echo "$update_data" | head -1)
+        local updates_raw
+        updates_raw=$(echo "$update_data" | tail -n +2)
+        
+        echo "80" ; echo "# Moving new app scripts"
+        rm -rf "$APPS_DIR"
+        mv "$TMP_DIR/apps" "$APPS_DIR"
+        
+        echo "100" ; echo "# Finished"
+    ) | yad --center --title="Updater" --text="Checking for app updates" \
+        --progress --width=300 --height=75 --auto-kill --borders=10 --auto-close --no-buttons
+    
+    # Convert raw output to array, preserving spaces
+    local updates=()
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && updates+=("$line")
+    done <<< "$updates_raw"
+    
+    local buttons=()
+    local buttons_noupd=()
+    local x2 y2
+    read -r x2 y2 <<< "$(get_window_position)"
+    
+    if xdotool search --name "^LinStore$" >/dev/null 2>&1; then
+        buttons+=("--button=Recheck Updates!edit-find:2" "--button=<b>Update Selected</b>:0")
+        buttons_noupd+=("--button=Recheck Updates!edit-find:2" "--button=Finish!go-next:3")
+    else
+        buttons+=("--button=Return to LinStore!edit-undo:1" "--button=Recheck Updates!edit-find:2" "--button=<b>Update Selected</b>!view-refresh:0")
+        buttons_noupd+=("--button=Return to LinStore!edit-undo:1" "--button=Recheck Updates!edit-find:2" "--button=Finish!go-next:3")
+    fi
+    
+    local response
+    
+    if [[ ${#updates[@]} -eq 0 ]]; then
+        pgrep -f "title=App Details" | xargs -r kill 2>/dev/null || true
+        GDK_BACKEND=x11 yad --info --class="LinStore" --title="LinStore Updates" \
+            --text="<big><b>All apps are up to date!</b></big>" --text-align=center \
+            --geometry=450x600+${x2}+${y2} "${buttons_noupd[@]}"
+        response=$?
+    else
+        pgrep -f "title=App Details" | xargs -r kill 2>/dev/null || true
+        local updates_list
+        updates_list=$(GDK_BACKEND=x11 yad --list --class="LinStore" --title="LinStore Updates" \
+            --column="Select":CHK --column="Icon":IMG --column="App" \
+            "${updates[@]}" --checklist --geometry=450x600+${x2}+${y2} --no-header "${buttons[@]}")
+        response=$?
+    fi
+    
+    case $response in
+        0) process_selected_updates "$updates_list"; ./update ;;
+        1) ./gui ;;
+        2) ./update ;;
+    esac
+}
+
+resolution=$(get_resolution)
+horizontal=$(echo "$resolution" | cut -d'x' -f1)
+vertical=$(echo "$resolution" | cut -d'x' -f2)
+
 check_for_updates
