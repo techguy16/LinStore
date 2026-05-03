@@ -3,6 +3,7 @@
   <h3 align=center>The <b>fastest</b> and <b>lightest</b> app store for Linux.</h3>
 </p>
 
+
 <p align="center">
     <a href="https://github.com/techguy16/LinStore/stargazers"><img src="https://img.shields.io/github/stars/techguy16/LinStore"></a>
     <a href="https://github.com/techguy16/LinStore/network/members"><img src="https://img.shields.io/github/forks/techguy16/LinStore"></a>
@@ -16,6 +17,11 @@
   <a href="https://github.com/techguy16/LinStore/issues/new?template=app-request.yml">Suggest new app</a> |
   <a href="https://github.com/techguy16/LinStore/issues/new?template=app-submission.yml">Submit a new app</a>
 </p>
+
+## ⚠️ SCAM ALERT
+Recently, I have been made aware of a repository which is claiming to offer an "updated version" of LinStore but instead provides a download for malicious software. 
+
+If you come across one of these repositories using LinStore's branding to ship malware, please report it. Thanks!
 
 ## Welcome to LinStore!
 <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/1.png" align="right" height="270px">
