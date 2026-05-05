@@ -9,6 +9,7 @@ for dir in "$APPS_DIR"/*/; do
     for install_file in "$dir"/install*; do
         [[ -f "$install_file" ]] || continue
         old_version=$(cat "$install_file" | grep 'VERSION=' | cut -d'=' -f2 | head -n1 | sed 's/"//g')
+        [[ "$old_version" != "" ]] || continue
         workflow_script="$WORKFLOWS_DIR/$folder_name.sh"
         workflow_script=$(echo "$workflow_script" | tr ' ' '\ ')
 
