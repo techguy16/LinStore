@@ -11,6 +11,16 @@ echo """
 echo "Welcome to the LinStore installer!"
 echo ""
 
+# Get directory for desktop shortcut
+if [ -f "${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs" ]; then
+    source ${XDG_CONFIG_HOME:-~/.config}/user-dirs.dirs
+    DESKTOP_DIR="${XDG_DESKTOP_DIR:-$HOME/Desktop}"
+elif [ -d "$HOME/Desktop" ]; then
+    DESKTOP_DIR="$HOME/Desktop"
+else
+    DESKTOP_DIR=""
+fi
+
 if [ ! -e /usr/local/bin/install_package ]; then
     sudo echo
 fi
@@ -95,9 +105,14 @@ if [ ! -e /usr/local/bin/install_package ]; then
 fi
 
 # Create a desktop shortcut for GUI
-information "Creating desktop shortcuts..."
+information "Creating shortcuts..."
 
-desktop_file=("$HOME/.local/share/applications/LinStore.desktop" "$HOME/Desktop/LinStore.desktop")
+if [[ "$DESKTOP_DIR" != "" ]]; then
+    desktop_file=("$HOME/.local/share/applications/LinStore.desktop" "$DESKTOP_DIR/LinStore.desktop")
+else
+    desktop_file=("$HOME/.local/share/applications/LinStore.desktop")
+fi
+
 for desktop_file in "${desktop_file[@]}"; do
     cat <<EOF >"$desktop_file"
 [Desktop Entry]
