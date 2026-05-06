@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source api
+
 APP_STORE_NAME="LinStore"
 APP_STORE_WIDTH=320
 APP_STORE_HEIGHT=600
@@ -72,71 +74,6 @@ list_piapps() {
     else
         echo ""
     fi
-}
-
-read_categories() {
-    while read -r category; do
-        categories["$category"]=""
-    done <etc/categories
-    
-    for app_dir in "${1}"/*; do
-        app_name=$(basename "${app_dir}")
-
-        if [ ! -e "${1}/$app_name/category" ]; then
-            escaped_app_name=$(echo "$app_name" | sed 's/([\/.^$*+?|{}\[])/\\&/g')
-            data=$(grep -E "$escaped_app_name" etc/piapps-categories | awk -F"|" '{print $2}')
-            if [ -n "$data" ]; then
-                data2=$(grep -E "$data" etc/mapping | awk -F"|" '{print $2}')
-                if [ -n "$data2" ]; then
-                    echo "$data2" > "${1}/$app_name/category"
-                    category_file="${1}/$app_name/category"
-                else
-                    continue
-                fi
-            else
-                continue
-            fi
-        fi
-
-        category_file="${1}/$app_name/category"
-        install_script="$app_dir/install"
-
-        # Check if the install script or architecture-specific install scripts exist for this app
-        if [ -e "$install_script" ]; then
-            while IFS= read -r app_in_category; do
-                # Make sure $app_in_category is not empty before accessing the array
-                if [ -n "$app_in_category" ]; then
-                    if [ -n "${categories[$app_in_category]}" ]; then
-                        categories["$app_in_category"]+=" $app_name"
-                        category_apps["$app_in_category"]+="|$app_name"
-                    else
-                        categories["$app_in_category"]="$app_name"
-                        category_apps["$app_in_category"]="$app_name"
-                    fi
-                fi
-                break
-            done <"$category_file"
-        else
-            architecture=$(cat ~/.linstore/architecture.txt)
-            install_script_arch="install-$architecture"
-
-            if [ -e "$app_dir/$install_script_arch" ]; then
-                while IFS= read -r app_in_category; do
-                    # Make sure $app_in_category is not empty before accessing the array
-                    if [ -n "$app_in_category" ]; then
-                        if [ -n "${categories[$app_in_category]}" ]; then
-                            categories["$app_in_category"]+=" $app_name"
-                            category_apps["$app_in_category"]+="|$app_name"
-                        else
-                            categories["$app_in_category"]="$app_name"
-                            category_apps["$app_in_category"]="$app_name"
-                        fi
-                    fi
-                    break
-                done <"$category_file"
-            fi
-        fi
-    done
 }
 
 get_app_description() {
@@ -284,9 +221,12 @@ show_apps_in_category() {
         formatted_apps=()
         if [ "$1" == "All Apps" ]; then
             title="All Apps"
-            for app_dir in apps/*; do
-                app_name=$(basename "$app_dir")
-                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ]; then
+            while IFS= read -r line; do
+                app_name=$(echo "$line" | awk -F'|' '{print $1}')
+                app_dir="apps/$app_name"
+                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
                     app_icon="apps/$app_name/icon-24.png"
                     formatted_apps+=("$app_icon")
                     if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
@@ -295,22 +235,26 @@ show_apps_in_category() {
                         formatted_apps+=("$app_name")
                     fi
                 fi
-            done
+            done < "apps/app_categories"
         else
-            apps_in_category="${category_apps["$1"]}"
             title="Apps in $1 Category"
             #formatted_apps=()
 
-            IFS='|' read -r -a app_list <<<"$apps_in_category"
-            for app in "${app_list[@]}"; do
-                app_icon="apps/$app/icon-24.png"
-                formatted_apps+=("$app_icon")
-                if [ -e "$HOME/.linstore/installscripts/$app" ]; then
-                    formatted_apps+=("<span fgcolor=\"$ACCENT\">$app</span>")
-                else
-                    formatted_apps+=("$app")
+            while IFS= read -r line; do
+                [[ $(echo "$line" | awk -F'|' '{print $2}') == "$1" ]] || continue
+                app=$(echo "$line" | awk -F'|' '{print $1}')
+                if [ -e "apps/$app/install" ] || [ -e "apps/$app/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app/install" ]; then
+                    app_icon="apps/$app/icon-24.png"
+                    formatted_apps+=("$app_icon")
+                    if [ -e "$HOME/.linstore/installscripts/$app" ]; then
+                        formatted_apps+=("<span fgcolor=\"$ACCENT\">$app</span>")
+                    else
+                        formatted_apps+=("$app")
+                    fi
                 fi
-            done
+            done < "apps/app_categories"
         fi
 
         GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$title</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
@@ -330,13 +274,8 @@ show_apps_in_category() {
 }
 
 show_app_store() {
-    read_categories "apps"
-    if [[ "$use_piapps" == "TRUE" ]]; then
-        read_categories "/home/${USER}/pi-apps/apps"
-    fi
-
     # Sort categories alphabetically and format with newlines
-    sorted_categories=$(printf '%s\n' "${!categories[@]}" | sort)
+    sorted_categories=$(printf '%s\n' "$(get_categories)" | sort)
 
     list_items=()
     list_items=("images/categories/All Apps.png" "All Apps")
@@ -372,6 +311,10 @@ show_app_store() {
         show_apps_in_category "$selected_category" &
     fi
 }
+
+if [ ! -e apps/app_categories ]; then
+        cache_categories "apps" "$(list_piapps)"
+fi
 
 if [[ $1 == "" ]]; then
     ./api logo

@@ -166,6 +166,51 @@ search_apps() {
     fi
 }
 
+cache_categories() {
+    # $1 - apps dir
+    # $2 - include Pi-Apps?
+    yad --title="LinStore" \
+        --class="LinStore" \
+        --center --borders=10 \
+        --text "Generating app cache..." \
+        --no-buttons &
+    
+    if [ -e "${1}/app_categories" ]; then 
+        rm -f "${1}/app_categories"
+    fi
+
+    for app_dir in "${1}"/*; do
+        app_name=$(basename "${app_dir}")
+        if [ -e "${1}/$app_name/category" ]; then
+            echo "$app_name|$(cat "${1}/$app_name/category")" >> "${1}/app_categories"
+        fi
+    done
+
+    if [[ "$2" == "TRUE" ]]; then
+        if [ -e "$HOME/pi-apps/etc/categories" ]; then
+            while IFS= read -r line; do
+                app_name=$(echo "$line" | awk -F'|' '{print $1}')
+                category=$(grep -r "$(echo "$line" | awk -F'|' '{print $2}')" etc/mapping | head -n1 | awk -F'|' '{print $2}')
+                echo "$app_name|$category" >> "${1}/app_categories"
+            done < "$HOME/pi-apps/etc/categories"
+        fi
+    fi
+
+    sort "${1}/app_categories" > "${1}/app_categories.tmp"
+    mv "${1}/app_categories.tmp" "${1}/app_categories"
+
+    pkill -f "yad*"
+}
+
+get_categories() {
+    cat etc/categories
+}
+
+get_apps_in_category() {
+    local category="$1"
+    grep "|$category$" etc/categories | cut -d'|' -f1
+}
+
 update() {
     pkill -f "yad*"
     ./api info "Updating LinStore..."
