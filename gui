@@ -76,33 +76,6 @@ list_piapps() {
     fi
 }
 
-get_app_description() {
-    app_name="$1"
-    description_file="apps/$app_name/description"
-    if [ -e "$description_file" ]; then
-        cat "$description_file"
-    else
-        echo "No description available."
-    fi
-}
-get_app_creator() {
-    app_name="$1"
-    creator_file="apps/$app_name/creator"
-    if [ -e "$creator_file" ]; then
-        cat "$creator_file"
-    else
-        echo "No description available."
-    fi
-}
-get_app_website() {
-    app_name="$1"
-    website_file="apps/$app_name/website"
-    if [ -e "$website_file" ]; then
-        cat "$website_file"
-    else
-        echo "No description available."
-    fi
-}
 theme_get() {
     website_file="etc/theme"
     if [ -e "$website_file" ]; then
@@ -159,8 +132,8 @@ app_details_page() {
 
     local selected_app_name="${1//|/}"
     selected_app_name=$(echo "$selected_app_name" | sed 's/<[^>]*>//g')
-    local app_directory="apps/$selected_app_name"
-    local app_icon="$app_directory/icon-48.png"
+    local app_directory="$(get_app_directory "$selected_app_name")"
+    local app_icon="$app_directory/icon-64.png"
     local description=$(get_app_description "$selected_app_name")
     local creator=$(get_app_creator "$selected_app_name")
     local website=$(get_app_website "$selected_app_name")
@@ -227,7 +200,7 @@ show_apps_in_category() {
                 if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
                 || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
                 || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
-                    app_icon="apps/$app_name/icon-24.png"
+                    app_icon="$(get_app_directory "$app_name")/icon-24.png"
                     formatted_apps+=("$app_icon")
                     if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
                         formatted_apps+=("<span fgcolor=\"$ACCENT\">$app_name</span>")
@@ -246,7 +219,7 @@ show_apps_in_category() {
                 if [ -e "apps/$app/install" ] || [ -e "apps/$app/install-$(cat ~/.linstore/architecture.txt)" ] \
                 || [ -e "$HOME/pi-apps/apps/$app/install-$(cat ~/.linstore/architecture.txt)" ] \
                 || [ -e "$HOME/pi-apps/apps/$app/install" ]; then
-                    app_icon="apps/$app/icon-24.png"
+                    app_icon="$(get_app_directory "$app")/icon-24.png"
                     formatted_apps+=("$app_icon")
                     if [ -e "$HOME/.linstore/installscripts/$app" ]; then
                         formatted_apps+=("<span fgcolor=\"$ACCENT\">$app</span>")

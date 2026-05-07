@@ -31,7 +31,7 @@ logo() {
 
 # Function to install an app
 install_app() {
-    local app_directory="$1"
+    local app_directory="$(get_app_directory "$2")"
     local selected_app_name="$2"
     local installed_file="$HOME/.linstore/installed"
     local temp_script=$(mktemp)
@@ -73,7 +73,7 @@ open_app() {
 
 # Function to install an app
 installation_script() {
-    local app_directory="$1"
+    local app_directory="$(get_app_directory "$2")"
     local selected_app_name="$2"
     local installed_file="$HOME/.linstore/installed"
 
@@ -97,7 +97,7 @@ installation_script() {
 
 # Function to uninstall an app
 uninstall_app() {
-    local app_directory="$1"
+    local app_directory="$(get_app_directory "$2")"
     local selected_app_name="$2"
     local uninstalled_file="$HOME/.linstore/uninstalled"
     local temp_script=$(mktemp)
@@ -211,6 +211,79 @@ get_apps_in_category() {
     grep "|$category$" etc/categories | cut -d'|' -f1
 }
 
+get_app_description() {
+    app_name="$1"
+    description_file="apps/$app_name/description"
+    if [ -e "$description_file" ]; then
+        cat "$description_file"
+    elif [ -e "$HOME/pi-apps/apps/$app_name/description" ]; then
+        cat "$HOME/pi-apps/apps/$app_name/description"
+    else
+        echo "No description available."
+    fi
+}
+get_app_creator() {
+    app_name="$1"
+    creator_file="apps/$app_name/creator"
+    if [ -e "$creator_file" ]; then
+        cat "$creator_file"
+    elif [ -e "$HOME/pi-apps/apps/$app_name/credits" ]; then
+        cat "$HOME/pi-apps/apps/$app_name/credits"
+    else
+        echo "No description available."
+    fi
+}
+get_app_website() {
+    app_name="$1"
+    website_file="apps/$app_name/website"
+    if [ -e "$website_file" ]; then
+        cat "$website_file"
+    else
+        echo "No description available."
+    fi
+}
+get_app_directory() {
+    app_name="$1"
+    if [ -d "apps/$app_name" ]; then
+        echo "apps/$app_name"
+    elif [ -d "$HOME/pi-apps/apps/$app_name" ]; then
+        echo "$HOME/pi-apps/apps/$app_name"
+    else
+        echo ""
+    fi
+}
+
+install_packages() {
+    packages="$@"
+    sudo apt update > /dev/null 2>&1
+
+    for package in $packages; do
+        if [[ "$package" == http* ]]; then
+            echo "Downloading and installing $package..."
+            wget --no-check-certificate "$package" -O /tmp/package.deb > /dev/null 2>&1
+            sudo dpkg -i /tmp/package.deb > /dev/null 2>&1
+        rm -r /tmp/package.deb
+        elif [[ "$package" == *.deb ]]; then
+            echo "Installing $package using dpkg..."
+            sudo dpkg -i "$package" > /dev/null 2>&1
+        else
+            echo "Installing $package using apt..."
+            
+            sudo apt install "$package" -y > /dev/null 2>&1
+        fi
+    done
+}
+
+git_clone() {
+    if [ -z "$2" ]; then
+        local directory=$(basename "$1")
+    else
+        local directory="$2"
+    fi
+
+    git clone "$1" "$directory"
+}
+
 update() {
     pkill -f "yad*"
     ./api info "Updating LinStore..."
@@ -236,6 +309,12 @@ information() {
     msg=$(printf "%s" "$*" | tr -d '\n' | sed 's/\\n/ /g')
     printf '\033[1;104;30m INFO:\033[0;104m %s \033[0m\n' "$msg" >&2
 }
+
+export -f install_packages
+export -f error
+export -f warning
+export -f information
+export -f git_clone
 
 # Main logic to handle command line arguments
 if [[ $1 == "search" ]]; then
