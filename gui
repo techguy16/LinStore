@@ -11,6 +11,12 @@ YAD_COMMAND="yad"
 YAD_FLAGS=""
 
 ACCENT="green"
+export ACCENT
+
+pipe="$(mktemp -u)"
+mkfifo $pipe
+export pipe
+trap "rm -f $pipe" EXIT
 
 #pwd
 if ! command -v "$YAD_COMMAND" &>/dev/null; then
@@ -189,90 +195,67 @@ app_details_page() {
     rm -f /tmp/description.tmp
 }
 
-show_apps_in_category() {
-    while true; do
-        formatted_apps=()
-        if [ "$1" == "All Apps" ]; then
-            title="All Apps"
-            while IFS= read -r line; do
-                app_name=$(echo "$line" | awk -F'|' '{print $1}')
-                app_dir="apps/$app_name"
-                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
-                || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
-                || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
-                    app_icon="$(get_app_directory "$app_name")/icon-24.png"
-                    formatted_apps+=("$app_icon")
-                    if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
-                        formatted_apps+=("<span fgcolor=\"$ACCENT\">$app_name</span>")
-                    else
-                        formatted_apps+=("$app_name")
-                    fi
+update_fifo() {
+    if [[ "$2" == "Back" ]]; then
+        selected_item=""
+    else
+        selected_item="$2"
+    fi
+
+    if [[ "$selected_item" == "" ]]; then
+        echo -e "\f" >> "$pipe"
+        sorted_categories=$(printf '%s\n' "$(get_categories)" | sort)
+
+        echo "images/categories/All Apps.png" >> "$pipe"
+        echo "All Apps" >> "$pipe"
+        while IFS= read -r category; do
+            category_icon="images/categories/$category.png" # Path to category icons
+            echo "$category_icon" >> "$pipe"
+            echo "$category" >> "$pipe"
+        done <<<"$sorted_categories"
+    elif [[ "$selected_item" == "All Apps" ]] || grep -q "$selected_item" "etc/categories"; then
+        echo -e "\f" >> "$pipe"
+        
+        echo "images/button/back.png" >> "$pipe"
+        echo "Back" >> "$pipe"
+
+        while IFS= read -r line; do
+            [[ $(echo "$line" | awk -F'|' '{print $2}') == "$selected_item" ]] ||\
+            [[ "$selected_item" == "All Apps" ]] || continue
+            app_name=$(echo "$line" | awk -F'|' '{print $1}')
+            app_dir="apps/$app_name"
+            if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                app_icon="$(get_app_directory "$app_name")/icon-24.png"
+                echo "$app_icon" >> "$pipe"
+                if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
+                    echo "<span fgcolor=\"$ACCENT\">$app_name</span>" >> "$pipe"
+                else
+                    echo "$app_name" >> "$pipe"
                 fi
-            done < "apps/app_categories"
-        else
-            title="Apps in $1 Category"
-            #formatted_apps=()
-
-            while IFS= read -r line; do
-                [[ $(echo "$line" | awk -F'|' '{print $2}') == "$1" ]] || continue
-                app=$(echo "$line" | awk -F'|' '{print $1}')
-                if [ -e "apps/$app/install" ] || [ -e "apps/$app/install-$(cat ~/.linstore/architecture.txt)" ] \
-                || [ -e "$HOME/pi-apps/apps/$app/install-$(cat ~/.linstore/architecture.txt)" ] \
-                || [ -e "$HOME/pi-apps/apps/$app/install" ]; then
-                    app_icon="$(get_app_directory "$app")/icon-24.png"
-                    formatted_apps+=("$app_icon")
-                    if [ -e "$HOME/.linstore/installscripts/$app" ]; then
-                        formatted_apps+=("<span fgcolor=\"$ACCENT\">$app</span>")
-                    else
-                        formatted_apps+=("$app")
-                    fi
-                fi
-            done < "apps/app_categories"
-        fi
-
-        GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$title</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" --class="LinStore" \
-                --button="Back"!images/button/back.png!:4 --separator="\n" --markup "${formatted_apps[@]}" --no-headers \
-                --css="span{fgcolor:green;}" --select-action='bash -c "./gui showdetails \"%s\"" &'#> /dev/null 2>&1
-
-        button_clicked=$?
-        if [ $button_clicked -eq 4 ]; then
-            show_app_store
-            break
-        fi
-
-        show_app_store
-        break
-    done
+            fi
+        done < "apps/app_categories"
+    else
+        ./gui showdetails "$selected_item"
+    fi
 }
+export -f update_fifo
 
 show_app_store() {
-    # Sort categories alphabetically and format with newlines
-    sorted_categories=$(printf '%s\n' "$(get_categories)" | sort)
-
-    list_items=()
-    list_items=("images/categories/All Apps.png" "All Apps")
-    while IFS= read -r category; do
-        category_icon="images/categories/$category.png" # Path to category icons
-        list_items+=("$category_icon")
-        list_items+=("$category")
-    done <<<"$sorted_categories"
-
     # Fetching a random line from the announcements file
     random_announcement=$(shuf -n 1 etc/announcements)
-
-    # Search function
-
-    selected_category_raw=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" \
+    update_fifo "" &
+    
+    GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" \
         --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
-        "${list_items[@]}" --class="LinStore" \
+        --class="LinStore" --select-action="bash -c "\""update_fifo %s"\""" --dclick-action="bash -c "\""update_fifo %s"\""" \
         --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" \
         --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search' &" \
         --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings' &" \
-        --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
+        --no-headers --item-height="$welcome_height" --timeout=0 --no-close < <(tail -f $pipe 2>/dev/null)
     exval=$?
     ./api info "Exit value: ${exval}"
-    selected_category="${selected_category_raw//|/}"
 
     if [ "$exval" == "44" ]; then
         ./api search && show_app_store
@@ -280,8 +263,6 @@ show_app_store() {
         pkill -f "yad*" > /dev/null 2>&1
     elif [ "$exval" -eq "252" ]; then
         pkill -f "yad*" > /dev/null 2>&1
-    elif [ -n "$selected_category" ]; then
-        show_apps_in_category "$selected_category" &
     fi
 }
 
@@ -301,7 +282,7 @@ if [[ $1 == "showdetails" ]]; then
     if [ -e /tmp/tmpname ]; then
         app_details_page "$(cat /tmp/tmpname && rm -r /tmp/tmpname)"
     else
-        app_details_page "$(echo $2 | awk -F"'" '{print $4}')"
+        app_details_page "$2"
     fi
 elif [[ $1 == "multi-install" ]]; then
     multi_install

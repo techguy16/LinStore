@@ -315,6 +315,8 @@ export -f error
 export -f warning
 export -f information
 export -f git_clone
+export -f get_app_directory
+export -f get_categories
 
 # Main logic to handle command line arguments
 if [[ $1 == "search" ]]; then
