@@ -182,7 +182,11 @@ cache_categories() {
     for app_dir in "${1}"/*; do
         app_name=$(basename "${app_dir}")
         if [ -e "${1}/$app_name/category" ]; then
-            echo "$app_name|$(cat "${1}/$app_name/category")" >> "${1}/app_categories"
+            if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                echo "$app_name|$(cat "${1}/$app_name/category")" >> "${1}/app_categories"
+            fi
         fi
     done
 
@@ -190,8 +194,13 @@ cache_categories() {
         if [ -e "$HOME/pi-apps/etc/categories" ]; then
             while IFS= read -r line; do
                 app_name=$(echo "$line" | awk -F'|' '{print $1}')
+                app_dir="$HOME/pi-apps/apps/$app_name"
                 category=$(grep -r "$(echo "$line" | awk -F'|' '{print $2}')" etc/mapping | head -n1 | awk -F'|' '{print $2}')
-                echo "$app_name|$category" >> "${1}/app_categories"
+                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                    echo "$app_name|$category" >> "${1}/app_categories"
+                fi
             done < "$HOME/pi-apps/etc/categories"
         fi
     fi

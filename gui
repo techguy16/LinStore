@@ -196,6 +196,7 @@ app_details_page() {
 }
 
 update_fifo() {
+    output=()
     if [[ "$2" == "Back" ]]; then
         selected_item=""
     else
@@ -206,39 +207,39 @@ update_fifo() {
         echo -e "\f" >> "$pipe"
         sorted_categories=$(printf '%s\n' "$(get_categories)" | sort)
 
-        echo "images/categories/All Apps.png" >> "$pipe"
-        echo "All Apps" >> "$pipe"
+        output+=("images/categories/All Apps.png" "All Apps")
         while IFS= read -r category; do
             category_icon="images/categories/$category.png" # Path to category icons
-            echo "$category_icon" >> "$pipe"
-            echo "$category" >> "$pipe"
+            output+=("$category_icon" "$category")
         done <<<"$sorted_categories"
     elif [[ "$selected_item" == "All Apps" ]] || grep -q "$selected_item" "etc/categories"; then
         echo -e "\f" >> "$pipe"
-        
-        echo "images/button/back.png" >> "$pipe"
-        echo "Back" >> "$pipe"
+        output+=("images/button/back.png")
+        output+=("Back")
 
         while IFS= read -r line; do
             [[ $(echo "$line" | awk -F'|' '{print $2}') == "$selected_item" ]] ||\
             [[ "$selected_item" == "All Apps" ]] || continue
-            app_name=$(echo "$line" | awk -F'|' '{print $1}')
-            app_dir="apps/$app_name"
-            if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
-            || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
-            || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
-                app_icon="$(get_app_directory "$app_name")/icon-24.png"
-                echo "$app_icon" >> "$pipe"
-                if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
-                    echo "<span fgcolor=\"$ACCENT\">$app_name</span>" >> "$pipe"
-                else
-                    echo "$app_name" >> "$pipe"
-                fi
+            app_name=$(echo "$line" | awk -F'|' '{print $1}')            
+            app_icon="$(get_app_directory "$app_name")/icon-24.png"
+            if [[ ! -f "$app_icon" ]]; then
+                app_icon="application-x-executable"
+            fi
+            output+=("$app_icon")
+            if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
+                output+=("<span fgcolor=\"$ACCENT\">$app_name</span>")
+            else
+                output+=("$app_name")
             fi
         done < "apps/app_categories"
     else
         ./gui showdetails "$selected_item"
+        return
     fi
+
+    for item in "${output[@]}"; do
+        echo "$item" >> "$pipe"
+    done
 }
 export -f update_fifo
 
@@ -248,12 +249,12 @@ show_app_store() {
     update_fifo "" &
     
     GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" \
-        --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
+        --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center \
         --class="LinStore" --select-action="bash -c "\""update_fifo %s"\""" --dclick-action="bash -c "\""update_fifo %s"\""" \
         --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" \
         --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search' &" \
         --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings' &" \
-        --no-headers --item-height="$welcome_height" --timeout=0 --no-close < <(tail -f $pipe 2>/dev/null)
+        --no-headers --timeout=0 --no-close < <(tail -f $pipe 2>/dev/null)
     exval=$?
     ./api info "Exit value: ${exval}"
 
