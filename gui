@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source api
+
 APP_STORE_NAME="LinStore"
 APP_STORE_WIDTH=320
 APP_STORE_HEIGHT=600
@@ -9,6 +11,12 @@ YAD_COMMAND="yad"
 YAD_FLAGS=""
 
 ACCENT="green"
+export ACCENT
+
+pipe="$(mktemp -u)"
+mkfifo $pipe
+export pipe
+trap "rm -f $pipe" EXIT
 
 #pwd
 if ! command -v "$YAD_COMMAND" &>/dev/null; then
@@ -74,98 +82,6 @@ list_piapps() {
     fi
 }
 
-read_categories() {
-    while read -r category; do
-        categories["$category"]=""
-    done <etc/categories
-    
-    for app_dir in "${1}"/*; do
-        app_name=$(basename "${app_dir}")
-
-        if [ ! -e "${1}/$app_name/category" ]; then
-            escaped_app_name=$(echo "$app_name" | sed 's/([\/.^$*+?|{}\[])/\\&/g')
-            data=$(grep -E "$escaped_app_name" etc/piapps-categories | awk -F"|" '{print $2}')
-            if [ -n "$data" ]; then
-                data2=$(grep -E "$data" etc/mapping | awk -F"|" '{print $2}')
-                if [ -n "$data2" ]; then
-                    echo "$data2" > "${1}/$app_name/category"
-                    category_file="${1}/$app_name/category"
-                else
-                    continue
-                fi
-            else
-                continue
-            fi
-        fi
-
-        category_file="${1}/$app_name/category"
-        install_script="$app_dir/install"
-
-        # Check if the install script or architecture-specific install scripts exist for this app
-        if [ -e "$install_script" ]; then
-            while IFS= read -r app_in_category; do
-                # Make sure $app_in_category is not empty before accessing the array
-                if [ -n "$app_in_category" ]; then
-                    if [ -n "${categories[$app_in_category]}" ]; then
-                        categories["$app_in_category"]+=" $app_name"
-                        category_apps["$app_in_category"]+="|$app_name"
-                    else
-                        categories["$app_in_category"]="$app_name"
-                        category_apps["$app_in_category"]="$app_name"
-                    fi
-                fi
-                break
-            done <"$category_file"
-        else
-            architecture=$(cat ~/.linstore/architecture.txt)
-            install_script_arch="install-$architecture"
-
-            if [ -e "$app_dir/$install_script_arch" ]; then
-                while IFS= read -r app_in_category; do
-                    # Make sure $app_in_category is not empty before accessing the array
-                    if [ -n "$app_in_category" ]; then
-                        if [ -n "${categories[$app_in_category]}" ]; then
-                            categories["$app_in_category"]+=" $app_name"
-                            category_apps["$app_in_category"]+="|$app_name"
-                        else
-                            categories["$app_in_category"]="$app_name"
-                            category_apps["$app_in_category"]="$app_name"
-                        fi
-                    fi
-                    break
-                done <"$category_file"
-            fi
-        fi
-    done
-}
-
-get_app_description() {
-    app_name="$1"
-    description_file="apps/$app_name/description"
-    if [ -e "$description_file" ]; then
-        cat "$description_file"
-    else
-        echo "No description available."
-    fi
-}
-get_app_creator() {
-    app_name="$1"
-    creator_file="apps/$app_name/creator"
-    if [ -e "$creator_file" ]; then
-        cat "$creator_file"
-    else
-        echo "No description available."
-    fi
-}
-get_app_website() {
-    app_name="$1"
-    website_file="apps/$app_name/website"
-    if [ -e "$website_file" ]; then
-        cat "$website_file"
-    else
-        echo "No description available."
-    fi
-}
 theme_get() {
     website_file="etc/theme"
     if [ -e "$website_file" ]; then
@@ -181,15 +97,11 @@ theme=$(theme_get)
 
 multi_install() {
     all_apps_list=()
-    for app_dir in apps/*; do
-        app_name=$(basename "$app_dir")
-        if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ]; then
-            app_icon="apps/$app_name/icon-24.png"
-            all_apps_list+=("FALSE")
-            all_apps_list+=("$app_icon")
-            all_apps_list+=("$app_name")
-        fi
-    done
+    while IFS= read -r app_name; do
+        app_name=$(echo "$app_name" | awk -F'|' '{print $1}')
+        app_icon="$(get_app_directory "$app_name")/icon-24.png"
+        all_apps_list+=("FALSE" "$app_icon" "$app_name")
+    done < "apps/app_categories"
 
     APPS=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>Multi Installer</b></big>\nInstall multiple apps at once" --geometry=600x${APP_STORE_HEIGHT} --center --columns="3" \
         --list --checklist --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column="Select":chk --column "Icon:IMG" --column "Apps" \
@@ -200,6 +112,7 @@ multi_install() {
         if [[ "$APPS" != "" ]]; then
             list=""
             while IFS= read -r line; do
+                echo "Selected: $line"
                 list+="$(echo -e "$line" | awk -F "|" '{print $3}')"
                 list+=$'\n'
             done <<< "$APPS"
@@ -222,8 +135,8 @@ app_details_page() {
 
     local selected_app_name="${1//|/}"
     selected_app_name=$(echo "$selected_app_name" | sed 's/<[^>]*>//g')
-    local app_directory="apps/$selected_app_name"
-    local app_icon="$app_directory/icon-48.png"
+    local app_directory="$(get_app_directory "$selected_app_name")"
+    local app_icon="$app_directory/icon-64.png"
     local description=$(get_app_description "$selected_app_name")
     local creator=$(get_app_creator "$selected_app_name")
     local website=$(get_app_website "$selected_app_name")
@@ -234,8 +147,8 @@ app_details_page() {
         installed="false"
     fi
 
-    local install_command=$(./api install "$app_directory" "$selected_app_name")
-    local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
+    local install_command=$(./api install "$selected_app_name")
+    local uninstall_command=$(./api uninstall "$selected_app_name")
 
     local open_command=$(./api open "$app_directory")
     buttons=()
@@ -279,99 +192,80 @@ app_details_page() {
     rm -f /tmp/description.tmp
 }
 
-show_apps_in_category() {
-    while true; do
-        formatted_apps=()
-        if [ "$1" == "All Apps" ]; then
-            title="All Apps"
-            for app_dir in apps/*; do
-                app_name=$(basename "$app_dir")
-                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ]; then
-                    app_icon="apps/$app_name/icon-24.png"
-                    formatted_apps+=("$app_icon")
-                    if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
-                        formatted_apps+=("<span fgcolor=\"$ACCENT\">$app_name</span>")
-                    else
-                        formatted_apps+=("$app_name")
-                    fi
-                fi
-            done
-        else
-            apps_in_category="${category_apps["$1"]}"
-            title="Apps in $1 Category"
-            #formatted_apps=()
-
-            IFS='|' read -r -a app_list <<<"$apps_in_category"
-            for app in "${app_list[@]}"; do
-                app_icon="apps/$app/icon-24.png"
-                formatted_apps+=("$app_icon")
-                if [ -e "$HOME/.linstore/installscripts/$app" ]; then
-                    formatted_apps+=("<span fgcolor=\"$ACCENT\">$app</span>")
-                else
-                    formatted_apps+=("$app")
-                fi
-            done
-        fi
-
-        GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "<big><b>$title</b></big>" --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="2" \
-                --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "LinStore" --column "Icon:IMG" --column "Apps" --class="LinStore" \
-                --button="Back"!images/button/back.png!:4 --separator="\n" --markup "${formatted_apps[@]}" --no-headers \
-                --css="span{fgcolor:green;}" --select-action='bash -c "./gui showdetails \"%s\"" &'#> /dev/null 2>&1
-
-        button_clicked=$?
-        if [ $button_clicked -eq 4 ]; then
-            show_app_store
-            break
-        fi
-
-        show_app_store
-        break
-    done
-}
-
-show_app_store() {
-    read_categories "apps"
-    if [[ "$use_piapps" == "TRUE" ]]; then
-        read_categories "/home/${USER}/pi-apps/apps"
+update_fifo() {
+    output=()
+    if [[ "$2" == "Back" ]]; then
+        selected_item=""
+    else
+        selected_item="$2"
     fi
 
-    # Sort categories alphabetically and format with newlines
-    sorted_categories=$(printf '%s\n' "${!categories[@]}" | sort)
+    if [[ "$selected_item" == "" ]]; then
+        echo -e "\f" >> "$pipe"
+        sorted_categories=$(printf '%s\n' "$(get_categories)" | sort)
 
-    list_items=()
-    list_items=("images/categories/All Apps.png" "All Apps")
-    while IFS= read -r category; do
-        category_icon="images/categories/$category.png" # Path to category icons
-        list_items+=("$category_icon")
-        list_items+=("$category")
-    done <<<"$sorted_categories"
+        output+=("images/categories/All Apps.png" "All Apps")
+        while IFS= read -r category; do
+            category_icon="images/categories/$category.png" # Path to category icons
+            output+=("$category_icon" "$category")
+        done <<<"$sorted_categories"
+    elif [[ "$selected_item" == "All Apps" ]] || grep -q "$selected_item" "etc/categories"; then
+        echo -e "\f" >> "$pipe"
+        output+=("images/button/back.png")
+        output+=("Back")
 
+        while IFS= read -r line; do
+            [[ $(echo "$line" | awk -F'|' '{print $2}') == "$selected_item" ]] ||\
+            [[ "$selected_item" == "All Apps" ]] || continue
+            app_name=$(echo "$line" | awk -F'|' '{print $1}')            
+            app_icon="$(get_app_directory "$app_name")/icon-24.png"
+            if [[ ! -f "$app_icon" ]]; then
+                app_icon="application-x-executable"
+            fi
+            output+=("$app_icon")
+            if [ -e "$HOME/.linstore/installscripts/$app_name" ]; then
+                output+=("<span fgcolor=\"$ACCENT\">$app_name</span>")
+            else
+                output+=("$app_name")
+            fi
+        done < "apps/app_categories"
+    else
+        ./gui showdetails "$selected_item"
+        return
+    fi
+
+    for item in "${output[@]}"; do
+        echo "$item" >> "$pipe"
+    done
+}
+export -f update_fifo
+
+show_app_store() {
     # Fetching a random line from the announcements file
     random_announcement=$(shuf -n 1 etc/announcements)
-
-    # Search function
-
-    selected_category_raw=$(GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" \
-        --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center --columns="3" \
-        "${list_items[@]}" --class="LinStore" \
+    update_fifo "" &
+    
+    GTK_THEME="${theme}" GDK_BACKEND=x11 $YAD_COMMAND --text "$random_announcement" \
+        --geometry=${APP_STORE_WIDTH}x${APP_STORE_HEIGHT}+${categoryPos}+${categoryPosY} --center \
+        --class="LinStore" --select-action="bash -c "\""update_fifo %s"\""" --dclick-action="bash -c "\""update_fifo %s"\""" \
         --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" \
         --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search' &" \
-        --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings' &" \
-        --no-headers --item-height="$welcome_height" --timeout=0 --no-close)
+        --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" \
+        --no-headers --timeout=0 --no-close < <(tail -f $pipe 2>/dev/null)
     exval=$?
     ./api info "Exit value: ${exval}"
-    selected_category="${selected_category_raw//|/}"
 
     if [ "$exval" == "44" ]; then
         ./api search && show_app_store
-    elif [ "$exval" -eq "143" ]; then
-        pkill -f "yad*" > /dev/null 2>&1
     elif [ "$exval" -eq "252" ]; then
         pkill -f "yad*" > /dev/null 2>&1
-    elif [ -n "$selected_category" ]; then
-        show_apps_in_category "$selected_category" &
+        exit 1
     fi
 }
+
+if [ ! -e apps/app_categories ]; then
+        cache_categories "apps" "$(list_piapps)"
+fi
 
 if [[ $1 == "" ]]; then
     ./api logo
@@ -385,7 +279,7 @@ if [[ $1 == "showdetails" ]]; then
     if [ -e /tmp/tmpname ]; then
         app_details_page "$(cat /tmp/tmpname && rm -r /tmp/tmpname)"
     else
-        app_details_page "$(echo $2 | awk -F"'" '{print $4}')"
+        app_details_page "$2"
     fi
 elif [[ $1 == "multi-install" ]]; then
     multi_install
