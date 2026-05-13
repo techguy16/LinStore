@@ -147,8 +147,8 @@ app_details_page() {
         installed="false"
     fi
 
-    local install_command=$(./api install "$app_directory" "$selected_app_name")
-    local uninstall_command=$(./api uninstall "$app_directory" "$selected_app_name")
+    local install_command=$(./api install "$selected_app_name")
+    local uninstall_command=$(./api uninstall "$selected_app_name")
 
     local open_command=$(./api open "$app_directory")
     buttons=()
