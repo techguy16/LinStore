@@ -253,17 +253,16 @@ show_app_store() {
         --class="LinStore" --select-action="bash -c "\""update_fifo %s"\""" --dclick-action="bash -c "\""update_fifo %s"\""" \
         --list --image="images/logo/logo-64.png" --window-icon="images/logo/logo-64.png" --image-on-top --title "$APP_STORE_NAME" --column "Icon:IMG" \
         --column "Category" --button "!images/button/search.png"!"Search":"bash -c './api search' &" \
-        --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings' &" \
+        --button "!images/button/update.png"!"Updates":"bash -c './update' &" --button "!images/button/settings.png"!"Settings":"bash -c './settings'" \
         --no-headers --timeout=0 --no-close < <(tail -f $pipe 2>/dev/null)
     exval=$?
     ./api info "Exit value: ${exval}"
 
     if [ "$exval" == "44" ]; then
         ./api search && show_app_store
-    elif [ "$exval" -eq "143" ]; then
-        pkill -f "yad*" > /dev/null 2>&1
     elif [ "$exval" -eq "252" ]; then
         pkill -f "yad*" > /dev/null 2>&1
+        exit 1
     fi
 }
 
