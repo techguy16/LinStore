@@ -41,6 +41,21 @@ curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | b
 ```
 
 <details>
+<summary>Install LinStore using Pi-Apps</summary>
+
+1. Open Pi-Apps
+2. Click the Settings icon
+3. Click "Import App"
+4. Paste the following URL in the box:
+```
+https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/etc/tools/LinStore.zip
+```
+5. Click "OK"
+6. Click "Save". LinStore should now be listed in the applications list. Click on it, then click "Install".
+
+</details>
+
+<details>
 <summary>Manually install LinStore</summary>
 
 ```bash
@@ -48,6 +63,15 @@ git clone https://github.com/techguy16/LinStore ~/.linstore
 cd ~/.linstore
 chmod +x install
 ./install
+```
+</details>
+
+<details>
+<summary>Uninstall LinStore</summary>
+
+```bash
+rm -irf ~/.linstore/!(installscripts)
+rm -f $HOME/.local/share/applications/LinStore.desktop $HOME/Desktop/LinStore.desktop
 ```
 </details>
 
@@ -66,14 +90,14 @@ To launch LinStore via the command line, run the following command:
 
 <hr>
 
-### Supported operating systems
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Openlogo-debianV2.svg/1200px-Openlogo-debianV2.svg.png" height="16px"> **Debian** 13/12/11
+### Supported distributions
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Openlogo-debianV2.svg/250px-Openlogo-debianV2.svg.png" height="16px"> **Debian** 13/12/11
 
-<img src="https://res.cloudinary.com/canonical/image/fetch/f_auto,q_auto,fl_sanitize,c_fill,w_100/https%3A%2F%2Fapi.charmhub.io%2Fapi%2Fv1%2Fmedia%2Fdownload%2Fcharm_Jfd56ZWJ9IaNHuPjXVLP9d9Xa2XMTSKp_icon_ad1a94cf9bb9f68614cb6c17e54e2fbd9dcc7fecc514dc6012b7f58fb5b87f8f.png" height="16px"> **Ubuntu** 24.04/22.04/20.04 LTS
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Ubuntu-logo-no-wordmark-solid-o-2022.svg/250px-Ubuntu-logo-no-wordmark-solid-o-2022.svg.png" height="16px" width="16px"> **Ubuntu** 26.04/24.04/22.04/20.04 LTS
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Linux_Mint_logo_without_wordmark.svg/1200px-Linux_Mint_logo_without_wordmark.svg.png" height="16px"> **Linux Mint** 22.x/21.x/20.x 
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Linux_Mint_logo_without_wordmark.svg/250px-Linux_Mint_logo_without_wordmark.svg.png" height="16px"> **Linux Mint** 22.x/21.x/20.x
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Pop%21_OS_Icon.svg/2048px-Pop%21_OS_Icon.svg.png" height="16px"> **Pop!_OS** 22.04/20.04
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Pop%21_OS_Icon.svg/250px-Pop%21_OS_Icon.svg.png" height="16px"> **Pop!_OS** 24.04/22.04/20.04
 
 <img src="https://www.svgrepo.com/show/303239/raspberry-pi-logo.svg" height="16px"> **Raspberry Pi OS** - versions based on supported **Debian** versions are supported (images from after **8th Nov 2021**)
 
@@ -98,3 +122,12 @@ If you have an app listed on LinStore, consider adding a badge to your README to
 ```markdown
 [<img src='https://github.com/techguy16/LinStore/blob/main/images/badge-light.png?raw=true' align=right>](https://github.com/techguy16/LinStore)
 ```
+
+
+## Contributing
+
+LinStore welcomes contributions, however small or big they are:
+
+* [Submit](https://github.com/techguy16/LinStore/issues/new?template=app-submission.yml) or [suggest](https://github.com/techguy16/LinStore/issues/new?template=app-request.yml) apps to be added to the app library
+* [Reporting bugs](https://github.com/techguy16/LinStore/issues/new?template=bug.yml) with LinStore
+* Or even just starring the repository!
