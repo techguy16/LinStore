@@ -1,2 +1,2 @@
-VERSION=1.133.0
+VERSION=1.134.0
 install_package https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-armhf
