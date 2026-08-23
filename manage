@@ -4,25 +4,25 @@
 # Very basic, sorry!
 
 install() {
-    local install_command=$(./api install "apps/$1" "$1")
+    local install_command=$(./api install "$1")
     bash -c "$install_command"
 }
 
 multi_install() {
     while IFS= read -r line; do
-        local install_command=$(./api install "apps/$line" "$line")
+        local install_command=$(./api install "$line")
         bash -c "$install_command"
     done <<< "$1"
 }
 
 uninstall() {
-    local uninstall_command=$(./api uninstall "apps/$1" "$1")
+    local uninstall_command=$(./api uninstall "$1")
     bash -c "$uninstall_command"
 }
 
 multi_uninstall() {
     while IFS= read -r line; do
-        local uninstall_command=$(./api uninstall "apps/$line" "$line")
+        local uninstall_command=$(./api uninstall "$line")
         bash -c "$uninstall_command"
     done <<< "$1"
 }

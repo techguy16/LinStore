@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source api
+
 if [[ $(xrandr --current) =~ "connected primary" ]]; then
     resolution=$(xrandr --current | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
 else
@@ -32,6 +34,9 @@ check_for_updates() {
         rm -rf ./apps
         mv ~/.linstore/tmp/apps ./apps
         sleep 1
+
+        echo '# Update app cache'
+        cache_categories "apps" "$(cat "etc/pi-apps-import" 2> /dev/null || echo FALSE)"
 
         # Clean up
         # rm -rf ~/.linstore/tmp

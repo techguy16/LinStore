@@ -31,8 +31,8 @@ logo() {
 
 # Function to install an app
 install_app() {
-    local app_directory="$1"
-    local selected_app_name="$2"
+    local app_directory="$(get_app_directory "$1")"
+    local selected_app_name="$1"
     local installed_file="$HOME/.linstore/installed"
     local temp_script=$(mktemp)
 
@@ -73,8 +73,8 @@ open_app() {
 
 # Function to install an app
 installation_script() {
-    local app_directory="$1"
-    local selected_app_name="$2"
+    local app_directory="$(get_app_directory "$1")"
+    local selected_app_name="$1"
     local installed_file="$HOME/.linstore/installed"
 
     if [ -e "$app_directory/install" ]; then
@@ -97,8 +97,8 @@ installation_script() {
 
 # Function to uninstall an app
 uninstall_app() {
-    local app_directory="$1"
-    local selected_app_name="$2"
+    local app_directory="$(get_app_directory "$1")"
+    local selected_app_name="$1"
     local uninstalled_file="$HOME/.linstore/uninstalled"
     local temp_script=$(mktemp)
 
@@ -166,6 +166,133 @@ search_apps() {
     fi
 }
 
+cache_categories() {
+    # $1 - apps dir
+    # $2 - include Pi-Apps?
+    yad --title="LinStore" \
+        --class="LinStore" \
+        --center --borders=10 \
+        --text "Generating app cache..." \
+        --no-buttons &
+    
+    if [ -e "${1}/app_categories" ]; then 
+        rm -f "${1}/app_categories"
+    fi
+
+    for app_dir in "${1}"/*; do
+        app_name=$(basename "${app_dir}")
+        if [ -e "${1}/$app_name/category" ]; then
+            if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                echo "$app_name|$(cat "${1}/$app_name/category")" >> "${1}/app_categories"
+            fi
+        fi
+    done
+
+    if [[ "$2" == "TRUE" ]]; then
+        if [ -e "$HOME/pi-apps/etc/categories" ]; then
+            while IFS= read -r line; do
+                app_name=$(echo "$line" | awk -F'|' '{print $1}')
+                app_dir="$HOME/pi-apps/apps/$app_name"
+                category=$(grep -r "$(echo "$line" | awk -F'|' '{print $2}')" etc/mapping | head -n1 | awk -F'|' '{print $2}')
+                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install-$(cat ~/.linstore/architecture.txt)" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                    echo "$app_name|$category" >> "${1}/app_categories"
+                fi
+            done < "$HOME/pi-apps/etc/categories"
+        fi
+    fi
+
+    sort "${1}/app_categories" > "${1}/app_categories.tmp"
+    mv "${1}/app_categories.tmp" "${1}/app_categories"
+
+    pkill -f "yad*"
+}
+
+get_categories() {
+    cat etc/categories
+}
+
+get_apps_in_category() {
+    local category="$1"
+    grep "|$category$" etc/categories | cut -d'|' -f1
+}
+
+get_app_description() {
+    app_name="$1"
+    description_file="apps/$app_name/description"
+    if [ -e "$description_file" ]; then
+        cat "$description_file"
+    elif [ -e "$HOME/pi-apps/apps/$app_name/description" ]; then
+        cat "$HOME/pi-apps/apps/$app_name/description"
+    else
+        echo "No description available."
+    fi
+}
+get_app_creator() {
+    app_name="$1"
+    creator_file="apps/$app_name/creator"
+    if [ -e "$creator_file" ]; then
+        cat "$creator_file"
+    elif [ -e "$HOME/pi-apps/apps/$app_name/credits" ]; then
+        cat "$HOME/pi-apps/apps/$app_name/credits"
+    else
+        echo "No description available."
+    fi
+}
+get_app_website() {
+    app_name="$1"
+    website_file="apps/$app_name/website"
+    if [ -e "$website_file" ]; then
+        cat "$website_file"
+    else
+        echo "No description available."
+    fi
+}
+get_app_directory() {
+    app_name="$1"
+    if [ -d "apps/$app_name" ]; then
+        echo "apps/$app_name"
+    elif [ -d "$HOME/pi-apps/apps/$app_name" ]; then
+        echo "$HOME/pi-apps/apps/$app_name"
+    else
+        echo ""
+    fi
+}
+
+install_packages() {
+    packages="$@"
+    sudo apt update > /dev/null 2>&1
+
+    for package in $packages; do
+        if [[ "$package" == http* ]]; then
+            echo "Downloading and installing $package..."
+            wget --no-check-certificate "$package" -O /tmp/package.deb > /dev/null 2>&1
+            sudo dpkg -i /tmp/package.deb > /dev/null 2>&1
+        rm -r /tmp/package.deb
+        elif [[ "$package" == *.deb ]]; then
+            echo "Installing $package using dpkg..."
+            sudo dpkg -i "$package" > /dev/null 2>&1
+        else
+            echo "Installing $package using apt..."
+            
+            sudo apt install "$package" -y > /dev/null 2>&1
+        fi
+    done
+}
+
+git_clone() {
+    if [ -z "$2" ]; then
+        local directory=$(basename "$1")
+    else
+        local directory="$2"
+    fi
+
+    git clone "$1" "$directory"
+}
+
 update() {
     pkill -f "yad*"
     ./api info "Updating LinStore..."
@@ -192,15 +319,23 @@ information() {
     printf '\033[1;104;30m INFO:\033[0;104m %s \033[0m\n' "$msg" >&2
 }
 
+export -f install_packages
+export -f error
+export -f warning
+export -f information
+export -f git_clone
+export -f get_app_directory
+export -f get_categories
+
 # Main logic to handle command line arguments
 if [[ $1 == "search" ]]; then
     search_apps
 elif [[ $1 == "install" ]]; then
-    install_app "$2" "$3"
+    install_app "$2"
 elif [[ $1 == "whatscript" ]]; then
-    installation_script "$2" "$3"
+    installation_script "$2"
 elif [[ $1 == "uninstall" ]]; then
-    uninstall_app "$2" "$3"
+    uninstall_app "$2"
 elif [[ $1 == "logo" ]]; then
     logo
 elif [[ $1 == "error" ]]; then
