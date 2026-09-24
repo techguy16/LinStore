@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source api
+
 APP_STORE_DIRECTORY="apps"
 CATEGORIES_FILE="etc/categories"
 THEMES_DIRECTORY="/usr/share/themes"
@@ -139,6 +141,7 @@ show_settings() {
 
         import_from_piapps=$(echo "$fixed_settings" | awk -F '|' '{print $5}')
         echo $import_from_piapps > "etc/pi-apps-import"
+        cache_categories "apps" "$(cat "etc/pi-apps-import" 2> /dev/null || echo FALSE)"
 
         express_updates=$(echo "$fixed_settings" | awk -F '|' '{print $6}')
         echo $express_updates > "etc/express-updates"
