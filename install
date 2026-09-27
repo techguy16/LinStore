@@ -38,16 +38,11 @@ information() {
     echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m" 1>&2
 }
 
-if ! command -v git &>/dev/null; then
-    echo "Git is not installed. Please install Git and rerun the installation."
-    missing_dependencies=true
-fi
-
-if ! command -v yad wmctrl convert xdotool &>/dev/null; then
+if ! command -v yad wmctrl convert xdotool git wget &>/dev/null; then
     warning "Various dependencies required for LinStore are not installed."
     information "Installing dependencies..."
     sudo apt update > /dev/null 2>&1
-    if sudo apt install yad wmctrl imagemagick xdotool -y > /dev/null 2>&1; then
+    if sudo apt install yad wmctrl imagemagick xdotool git wget -y > /dev/null 2>&1; then
         missing_dependencies=false
     else
         error "Cannot continue, exiting."
