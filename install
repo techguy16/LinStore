@@ -55,6 +55,24 @@ if ! command -v yad wmctrl convert xdotool &>/dev/null; then
     fi
 fi
 
+# Ubuntu 26+ requires yad to be downgraded for LinStore to display properly
+if [[ "$(cat /etc/os-release | grep VERSION_ID | tr -d 'VERSION_ID="' | awk -F'.' '{print $1}')" -ge 26 ]]; then
+    information "Downgrading yad to supported version..."
+    if [[ "$(uname -m)" == "x86_64" ]]; then
+        package_url="http://archive.ubuntu.com/ubuntu/pool/universe/y/yad/yad_0.40.0-1build3_amd64.deb"
+    elif [[ "$(uname -m)" == "aarch64" ]]; then
+        package_url="https://ports.ubuntu.com/pool/universe/y/yad/yad_0.40.0-1build3_arm64.deb"
+    else
+        warning "Unsupported architecture for downgrade. LinStore may break."
+    fi
+
+    if [[ -n "$package_url" ]]; then
+        wget --no-check-certificate "$package_url" -O /tmp/package.deb > /dev/null 2>&1
+        sudo dpkg -i /tmp/package.deb > /dev/null 2>&1
+        rm -r /tmp/package.deb
+    fi
+fi
+
 if [ "$missing_dependencies" = true ]; then
     exit 1
 fi
