@@ -29,6 +29,16 @@ logo() {
 ╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝"""
 }
 
+generate_command() {
+    if [[ "$(readlink -f $(which x-terminal-emulator))" == */ptyxis* ]]; then
+        echo "ptyxis -- $1"
+    elif [[ "$(readlink -f $(which x-terminal-emulator))" == */gnome-terminal* ]]; then
+        echo "GNOME_TERMINAL_SCREEN='' gnome-terminal -- $1"
+    else
+        echo "x-terminal-emulator -c '$1'"
+    fi
+}
+
 # Function to install an app
 install_app() {
     local app_directory="$(get_app_directory "$1")"
@@ -52,7 +62,8 @@ install_app() {
             fi
         fi
     fi
-    echo "x-terminal-emulator -e './api logo && ./api info \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
+
+    generate_command "bash -c './api logo && ./api info \"Installing ${selected_app_name}\n\n\" && sudo echo && bash $temp_script'"
 }
 
 get_installed_apps_from_piapps() {
@@ -119,7 +130,7 @@ uninstall_app() {
         fi
     fi
 
-    echo "x-terminal-emulator -e './api logo && ./api info \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
+    generate_command "./api logo && ./api info \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\""
 }
 
 # Function to search for apps

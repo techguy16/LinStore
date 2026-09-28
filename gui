@@ -153,14 +153,14 @@ app_details_page() {
     local open_command=$(./api open "$app_directory")
     buttons=()
 
+    # Create a temporary script for the commands
+    temp_script=$(mktemp)
+    chmod +x "$temp_script"
     if [[ "$installed" == "true" ]]; then
         displayName="<b>${selected_app_name}</b> (<i>installed</i>)"
         buttonText="Uninstall"
         buttonImage="images/button/uninstall.png"
-        # Create a temporary script for the commands
-        temp_script=$(mktemp)
         echo "$uninstall_command && rm -rf \"$HOME/.linstore/installscripts/$selected_app_name\"" >"$temp_script"
-        chmod +x "$temp_script"
         buttonCommand="bash -c 'bash $temp_script; rm $temp_script'"
         if [[ "$open_command" != "" ]]; then
             buttons+=("--button=<b>Open</b>!system-run:$open_command")
@@ -169,7 +169,8 @@ app_details_page() {
         displayName="<b>${selected_app_name}</b> (<i>not installed</i>)"
         buttonText="<b>Install</b>"
         buttonImage="images/button/install.png"
-        buttonCommand="$install_command"
+        echo "$install_command" >"$temp_script"
+        buttonCommand="bash -c 'bash $temp_script; rm $temp_script'"
     fi
 
     if [[ "$open" != "" ]]; then
