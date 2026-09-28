@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source api
-
 APP_STORE_NAME="LinStore"
 APP_STORE_WIDTH=320
 APP_STORE_HEIGHT=600
@@ -29,6 +27,8 @@ if [ -f "gui" ] || [ -f "createapp" ] || [ -f "settings" ]; then
 else
     cd ~/.linstore
 fi
+
+source api
 
 if [[ $(xrandr --current) =~ "connected primary" ]]; then
     #echo "Dual monitor setup, placing on primary monitor"
