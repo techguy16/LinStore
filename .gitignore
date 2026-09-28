@@ -1,7 +1,10 @@
 /updates_list.txt
+/architecture.txt
+/installed
 /apps/app_categories
 /etc/accent
 /etc/editor
 /etc/express-updates
 /etc/pi-apps-import
 /etc/theme
+/installscripts*

@@ -106,16 +106,18 @@ cp -r "$temp_dir"/* "$install_dir"
 cd "$install_dir"
 chmod +x *
 chmod +x "gui"
+echo "$HOME/.linstore" > "$HOME/.linstore/directory"
 rm -rf "$temp_dir"  # Clean up temporary directory
 
 # Create a bin directory if it doesn't exist
 
-if [ ! -e /usr/local/bin/install_package ]; then
-    sudo mkdir -p /usr/local/bin
+# LinStore no longer uses system-wide scripts
+# if [ ! -e /usr/local/bin/install_package ]; then
+#    sudo mkdir -p /usr/local/bin
     # Copy files to /usr/local/bin
-    information "Copying executable files to /usr/local/bin..."
-    sudo cp "$install_dir"/etc/tools/*_package /usr/local/bin/
-fi
+#    information "Copying executable files to /usr/local/bin..."
+#    sudo cp "$install_dir"/etc/tools/*_package /usr/local/bin/
+# fi
 
 # Create a desktop shortcut for GUI
 information "Creating shortcuts..."

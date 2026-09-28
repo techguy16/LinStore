@@ -1,11 +1,11 @@
 #!/bin/bash
 
-APP_STORE_DIRECTORY="apps"
-CATEGORIES_FILE="etc/categories"
+APP_STORE_DIRECTORY="$(linstore_directory)/apps"
+CATEGORIES_FILE="$(linstore_directory)/etc/categories"
 
 get_editor() {
     app_name="$1"
-    creator_file="etc/editor"
+    creator_file="$(linstore_directory)/etc/editor"
     if [ -e "$creator_file" ]; then
         cat "$creator_file"
     else
@@ -15,12 +15,12 @@ get_editor() {
 select_category_pane() {
     category_list=()
     while read -r category; do
-        category_list+=("images/categories/$category.png" "<b>$category</b>" "$(cat "etc/categoryinfo/${category}")")
+        category_list+=("$(linstore_directory)/images/categories/$category.png" "<b>$category</b>" "$(cat "$(linstore_directory)/etc/categoryinfo/${category}")")
     done < "$CATEGORIES_FILE"
     
     selected_category=$(yad --title="Select Category" \
-        --image="images/logo/logo-64.png" --image-on-top \
-        --window-icon="images/logo/logo-64.png" --class="LinStore" \
+        --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+        --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
         --text="<big><b>Choose a category</b></big>\nLinStore organises apps by category, which allows users to quickly find related apps easier.\nPlease choose a category for your app:" \
         --field="Category:" \
         --width="525" --height="550" --center --borders=10 --columns=1 "${category_list[@]}" \
@@ -44,8 +44,8 @@ create_new_app_pane() {
     app_directory="$APP_STORE_DIRECTORY"
     app_data=$(yad --form \
         --title="Create New App" \
-        --image="images/logo/logo-64.png" --image-on-top \
-        --window-icon="images/logo/logo-64.png" \
+        --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+        --window-icon="$(linstore_directory)/images/logo/logo-64.png" \
         --class="LinStore" \
         --text="<big><b>App Details</b></big>\nYour app needs information for LinStore to properly display it.\nEnter the following details for the new $(cat ${app_directory}/category) app:" \
         --field=":LBL" "" \
@@ -99,8 +99,8 @@ create_new_app_pane() {
     #icon_file=$(yad --file-selection --title="Select Icon for App" --width="525" --height="550" --center --on-top)
     assets_data=$(yad --form \
         --title="Create New App" \
-        --image="images/logo/logo-64.png" --image-on-top \
-        --window-icon="images/logo/logo-64.png" --class="LinStore" \
+        --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+        --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
         --text="<big><b>App Assets</b></big>\nYour app needs assets in LinStore, which is currently limited to the app's logo/icon.\nSelect these assets here:" \
         --field=":LBL" "" \
         --field="<b>Icon/logo</b>:SFL" "" \
@@ -159,8 +159,8 @@ edit_scripts_pane() {
 
     yad --form \
     --title="Create New App" \
-    --image="images/logo/logo-64.png" --image-on-top \
-    --window-icon="images/logo/logo-64.png" --class="LinStore" \
+    --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+    --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
     --text="<big><b>Edit App Scripts</b></big>\nEdit your app's install and uninstall scripts." \
     --field=":LBL" "" \
     --field="Listed below are the scripts used by LinStore when installing or uninstalling your app. Click on one to create or edit it.:LBL" "" \
@@ -172,8 +172,8 @@ edit_scripts_pane() {
     if [ $? -eq 0 ]; then
         yad --form \
         --title="Create New App" \
-        --image="images/logo/logo-64.png" --image-on-top \
-        --window-icon="images/logo/logo-64.png" --class="LinStore" \
+        --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+        --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
         --text="<big><b>Thank you!</b></big>\nThank you for using LinStore's app creation wizard." \
         --field=":LBL" "" \
         --field="<b>Next Steps:</b>\nSubmit your app for addition to LinStore's app library. You can do this by 'zipping' the new app's directory and uploading it to an issue at <a href='https://github.com/techguy16/LinStore'>our GitHub</a>.\n\nIf you do not wish to do so, you can still distribute your app's zip file by specifying to your users to use LinStore's 'Import App' function.:LBL" "" \
@@ -186,8 +186,8 @@ edit_scripts_pane() {
 welcome() {
     yad --form \
     --title="Create New App" \
-    --image="images/logo/logo-64.png" --image-on-top \
-    --window-icon="images/logo/logo-64.png" --class="LinStore" \
+    --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+    --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
     --text="<big><b>App Creator</b></big>\nWelcome to the LinStore's app creator!" \
     --field=":LBL" "" \
     --field="<b>What is this?</b>\nThis is a wizard that will guide you through the necessary steps in order to create an app to be displayed in LinStore.\n\nIf you're ready, press 'Next'.\nIf you got here by accident, press 'Cancel'.:LBL" "" \
@@ -205,8 +205,8 @@ import_zip_file() {
     #import_file=$(yad --file-selection --title="Select Zip File to Import" --height="550" --width="525" --center --on-top)
     import_file=$(yad --form \
     --title="Import App" \
-    --image="images/logo/logo-64.png" --image-on-top \
-    --window-icon="images/logo/logo-64.png" --class="LinStore" \
+    --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+    --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
     --text="<big><b>Import an app</b></big>\nImport an app packaged as a ZIP into LinStore." \
     --field=":LBL" "" \
     --field="Some app developers distribute ZIP files to let you import into LinStore.\n\nTo import such a ZIP file, select it below and we'll import it for you.:LBL" "" \
@@ -225,8 +225,8 @@ import_zip_file() {
 
     yad --form \
     --title="Import App" \
-    --image="images/logo/logo-64.png" --image-on-top \
-    --window-icon="images/logo/logo-64.png" --class="LinStore" \
+    --image="$(linstore_directory)/images/logo/logo-64.png" --image-on-top \
+    --window-icon="$(linstore_directory)/images/logo/logo-64.png" --class="LinStore" \
     --text="<big><b>Success!</b></big>\nYour app has been successfully imported into LinStore." \
     --field=":LBL" "" \
     --field="You should now be able to find the app in the list of available apps!:LBL" "" \
