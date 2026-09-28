@@ -18,11 +18,6 @@
   <a href="https://github.com/techguy16/LinStore/issues/new?template=app-submission.yml">Submit a new app</a>
 </p>
 
-## ⚠️ SCAM ALERT
-Recently, I have been made aware of a repository which is claiming to offer an "updated version" of LinStore but instead provides a download for malicious software. 
-
-If you come across one of these repositories using LinStore's branding to ship malware, please report it. Thanks!
-
 ## Welcome to LinStore!
 <img src="https://raw.githubusercontent.com/techguy16/LinStore/refs/heads/main/images/screenshots/1.png" align="right" height="270px">
 LinStore is the Linux desktop's best app store, but it's also the lightest and fastest graphical store available, using less RAM than another popular lightweight app store.<sup>^</sup>
