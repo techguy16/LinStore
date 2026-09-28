@@ -38,7 +38,18 @@ information() {
     echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m" 1>&2
 }
 
-if ! command -v yad wmctrl convert xdotool git wget &>/dev/null; then
+missing_dependencies=false
+
+dependencies=(yad wmctrl convert xdotool git wget)
+
+for dependency in "${dependencies[@]}"; do
+    if ! command -v "$dependency" >/dev/null 2>&1; then
+        missing_dependencies=true
+        break
+    fi
+done
+
+if [[ "$missing_dependencies" == true ]]; then
     warning "Various dependencies required for LinStore are not installed."
     information "Installing dependencies..."
     sudo apt update > /dev/null 2>&1
