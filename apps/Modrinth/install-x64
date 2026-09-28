@@ -1,2 +1,2 @@
-VERSION=0.21.5
+VERSION=0.21.6
 install_package https://launcher-files.modrinth.com/versions/${VERSION}/linux/Modrinth%20App_${VERSION}_amd64.deb
