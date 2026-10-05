@@ -48,8 +48,9 @@ generate_command() {
         echo "ptyxis -- $1"
     elif [[ "$(readlink -f $(which x-terminal-emulator 2>/dev/null))" == */gnome-terminal* ]]; then
         echo "GNOME_TERMINAL_SCREEN='' gnome-terminal -- $1"
+    
     else
-        echo "x-terminal-emulator -c '$1'"
+        echo "x-terminal-emulator -e $1"
     fi
 }
 
