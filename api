@@ -9,8 +9,22 @@ fi
 horizontal=$(echo $resolution | cut -d'x' -f1)
 vertical=$(echo $resolution | cut -d'x' -f2)
 
+linstore_directory() {
+    if [ -e "$HOME/.linstore/directory" ]; then
+        cat "$HOME/.linstore/directory"
+    elif [ -e "$(pwd)/gui" ]; then
+        echo "$(pwd)"
+    else
+        echo "$HOME/.linstore"
+    fi
+}
+
+api_script() {
+    echo "$(linstore_directory)/api"
+}
+
 theme_get() {
-    website_file="etc/theme"
+    website_file="$(linstore_directory)/etc/theme"
     if [ -e "$website_file" ]; then
         cat "$website_file"
     else
@@ -29,30 +43,47 @@ logo() {
 ╚══════╝╚═╝╚═╝░░╚══╝╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚══════╝"""
 }
 
+generate_command() {
+    if [[ "$(readlink -f $(which x-terminal-emulator 2>/dev/null))" == */ptyxis* ]]; then
+        echo "ptyxis -- $1"
+    elif [[ "$(readlink -f $(which x-terminal-emulator 2>/dev/null))" == */gnome-terminal* ]]; then
+        echo "GNOME_TERMINAL_SCREEN='' gnome-terminal -- $1"
+    
+    else
+        echo "x-terminal-emulator -e $1"
+    fi
+}
+
 # Function to install an app
 install_app() {
-    local app_directory="$1"
-    local selected_app_name="$2"
-    local installed_file="$HOME/.linstore/installed"
+    local app_directory="$(get_app_directory "$1")"
+    local selected_app_name="$1"
+    local installed_file="$(linstore_directory)/installed"
     local temp_script=$(mktemp)
 
+    mkdir -p "$(linstore_directory)/installscripts"
+
+    echo "#!/bin/bash" > "$temp_script"
+    echo "source \"$(api_script)\"" >> "$temp_script"
+
     if [ -e "$app_directory/install" ]; then
-        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+        echo "cd \"$app_directory\" && chmod +x install && ./install && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat install > \"$(linstore_directory)/installscripts/${selected_app_name}\"" >> "$temp_script"
     else
-        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local architecture=$(cat "$(linstore_directory)/architecture.txt")
         local install_script="install-$architecture"
 
         if [ -e "$app_directory/$install_script" ]; then
-            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+            echo "cd \"$app_directory\" && chmod +x \"$install_script\" && ./\"$install_script\" && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat \"$install_script\" > \"$(linstore_directory)/installscripts/${selected_app_name}\"" >> "$temp_script"
         else
             if [ -e "$app_directory/packages" ]; then
-                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$HOME/.linstore/installscripts/${selected_app_name}\"" >"$temp_script"
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt install \$(cat \"$app_directory/packages\") && echo \"$selected_app_name\" >> \"$installed_file\" && echo \"$selected_app_name is installed\" && cat packages > \"$(linstore_directory)/installscripts/${selected_app_name}\"" >> "$temp_script"
             else
-                echo "./api error 'Installation script not found for this architecture.'"
+                echo "error 'Installation script not found for this architecture.'" >> "$temp_script"
             fi
         fi
     fi
-    echo "x-terminal-emulator -e './api logo && ./api info \"Installing ${selected_app_name}\n\n\" && bash -c \"sudo echo && bash $temp_script\"'"
+
+    generate_command "bash -c 'source \"$(api_script)\" && logo && information \"Installing ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
 }
 
 get_installed_apps_from_piapps() {
@@ -71,16 +102,14 @@ open_app() {
     fi
 }
 
-# Function to install an app
 installation_script() {
-    local app_directory="$1"
-    local selected_app_name="$2"
-    local installed_file="$HOME/.linstore/installed"
+    local app_directory="$(get_app_directory "$1")"
+    local selected_app_name="$1"
 
     if [ -e "$app_directory/install" ]; then
         echo "install"
     else
-        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local architecture=$(cat "$(linstore_directory)/architecture.txt")
         local install_script="install-$architecture"
 
         if [ -e "$app_directory/$install_script" ]; then
@@ -97,29 +126,32 @@ installation_script() {
 
 # Function to uninstall an app
 uninstall_app() {
-    local app_directory="$1"
-    local selected_app_name="$2"
-    local uninstalled_file="$HOME/.linstore/uninstalled"
+    local app_directory="$(get_app_directory "$1")"
+    local selected_app_name="$1"
+    local uninstalled_file="$(linstore_directory)/uninstalled"
     local temp_script=$(mktemp)
 
+    echo "#!/bin/bash" > "$temp_script"
+    echo "source \"$(api_script)\"" >> "$temp_script"
+
     if [ -e "$app_directory/uninstall" ]; then
-        echo "cd \"$app_directory\" && chmod +x uninstall && ./uninstall && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+        echo "cd \"$app_directory\" && chmod +x uninstall && ./uninstall && echo \"$selected_app_name has been uninstalled\"" >> "$temp_script"
     else
-        local architecture=$(cat "$HOME/.linstore/architecture.txt")
+        local architecture=$(cat "$(linstore_directory)/architecture.txt")
         local uninstall_script="uninstall-$architecture"
 
         if [ -e "$app_directory/$uninstall_script" ]; then
-            echo "cd \"$app_directory\" && chmod +x \"$uninstall_script\" && ./\"$uninstall_script\" && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+            echo "cd \"$app_directory\" && chmod +x \"$uninstall_script\" && ./\"$uninstall_script\" && echo \"$selected_app_name has been uninstalled\"" >> "$temp_script"
         else
             if [ -e "$app_directory/packages" ]; then
-                echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name has been uninstalled\"" >"$temp_script"
+                echo "cd \"$app_directory\" && sudo apt update && sudo apt remove \$(cat \"$app_directory/packages\") && echo \"$selected_app_name has been uninstalled\"" >> "$temp_script"
             else
-                echo "./api error 'Uninstallation script not found for this architecture.'" >"$temp_script"
+                echo "error 'Uninstallation script not found for this architecture.'" >> "$temp_script"
             fi
         fi
     fi
 
-    echo "x-terminal-emulator -e './api logo && ./api info \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
+    generate_command "bash -c 'source \"$(api_script)\" && logo && information \"Uninstalling ${selected_app_name}\n\n\" && sudo echo && bash \"$temp_script\"'"
 }
 
 # Function to search for apps
@@ -130,18 +162,19 @@ search_apps() {
     query=$(GTK_THEME="${theme}" yad --title="Search Apps" --borders=10 --center --text="Enter query:" --entry \
             --button="Cancel!gtk-cancel":1 --button="Search!edit-find":0)
     if [ -n "$query" ]; then
-        app_list=$(ls -w 1 ./apps | awk 'BEGIN {ORS="\n"} {print}')
+        app_list=$(ls -w 1 ./apps 2>/dev/null | awk 'BEGIN {ORS="\n"} {print}')
         num_apps=$(echo "$app_list" | wc -l)
         num_apps=$((num_apps))
         echo "$num_apps"
 
         apps_found=()
         for app in ./apps/*; do
+            [ -e "$app" ] || continue
             app_name=$(basename "$app")
             if [[ "${app_name,,}" == *"${query,,}"* ]]; then
                 app_icon="apps/$app_name/icon-24.png"
                 app_category_file="$app/category"
-                app_category=$(head -n 1 "$app_category_file")
+                app_category=$(head -n 1 "$app_category_file" 2>/dev/null)
                 apps_found+=("$app_icon" "$app_name" "in" "$app_category")
             fi
         done
@@ -152,7 +185,7 @@ search_apps() {
             --column="in" --column="Category" --no-headers "${apps_found[@]}" --button="Exit!gtk-cancel":1 --button="View App!edit-find":0 &)
             if [ -n "$selected_category2" ]; then
                 echo "$(echo ${selected_category2} | awk -F"|" '{print $2}' | sed 's/|//g')" > /tmp/tmpname
-                ./gui showdetails &
+                "$(linstore_directory)/gui" showdetails &
             fi
         else
             GTK_THEME="${theme}" yad --center --title="Search Results" --geometry=450x600+${x2}+${y2} \
@@ -160,20 +193,161 @@ search_apps() {
             --button="Retry!edit-find":1 --button="Exit!gtk-cancel":0
             response=$?
             if [ $response -eq 1 ]; then
-                ./api search
+                "$(api_script)" search
             fi
         fi
     fi
 }
 
+cache_categories() {
+    # $1 - apps dir
+    # $2 - include Pi-Apps?
+    yad --title="LinStore" \
+        --class="LinStore" \
+        --center --borders=10 \
+        --text "Generating app cache..." \
+        --no-buttons &
+    
+    if [ -e "${1}/app_categories" ]; then 
+        rm -f "${1}/app_categories"
+    fi
+
+    local architecture=$(cat "$(linstore_directory)/architecture.txt" 2>/dev/null)
+
+    for app_dir in "${1}"/*; do
+        app_name=$(basename "${app_dir}")
+        if [ -e "${1}/$app_name/category" ]; then
+            if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$architecture" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install-$architecture" ] \
+            || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                echo "$app_name|$(cat "${1}/$app_name/category")" >> "${1}/app_categories"
+            fi
+        fi
+    done
+
+    if [[ "$2" == "TRUE" ]]; then
+        if [ -e "$HOME/pi-apps/etc/categories" ]; then
+            while IFS= read -r line; do
+                app_name=$(echo "$line" | awk -F'|' '{print $1}')
+                app_dir="$HOME/pi-apps/apps/$app_name"
+                category=$(grep -r "$(echo "$line" | awk -F'|' '{print $2}')" etc/mapping | head -n1 | awk -F'|' '{print $2}')
+                if [ -e "$app_dir/install" ] || [ -e "$app_dir/install-$architecture" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install-$architecture" ] \
+                || [ -e "$HOME/pi-apps/apps/$app_name/install" ]; then
+                    echo "$app_name|$category" >> "${1}/app_categories"
+                fi
+            done < "$HOME/pi-apps/etc/categories"
+        fi
+    fi
+
+    sort "${1}/app_categories" > "${1}/app_categories.tmp"
+    mv "${1}/app_categories.tmp" "${1}/app_categories"
+
+    pkill -f "yad*"
+}
+
+get_categories() {
+    cat "$(linstore_directory)/etc/categories"
+}
+
+get_apps_in_category() {
+    local category="$1"
+    grep "|$category$" "$(linstore_directory)/etc/categories" | cut -d'|' -f1
+}
+
+get_app_description() {
+    app_name="$1"
+    description_file="$(linstore_directory)/apps/$app_name/description"
+    if [ -e "$description_file" ]; then
+        cat "$description_file"
+    elif [ -e "$HOME/pi-apps/apps/$app_name/description" ]; then
+        cat "$HOME/pi-apps/apps/$app_name/description"
+    else
+        echo "No description available."
+    fi
+}
+
+get_app_creator() {
+    app_name="$1"
+    creator_file="$(linstore_directory)/apps/$app_name/creator"
+    if [ -e "$creator_file" ]; then
+        cat "$creator_file"
+    elif [ -e "$HOME/pi-apps/apps/$app_name/credits" ]; then
+        cat "$HOME/pi-apps/apps/$app_name/credits"
+    else
+        echo "No creator available."
+    fi
+}
+
+get_app_website() {
+    app_name="$1"
+    website_file="$(linstore_directory)/apps/$app_name/website"
+    if [ -e "$website_file" ]; then
+        cat "$website_file"
+    else
+        echo "No website available."
+    fi
+}
+
+get_app_directory() {
+    local app_name="$1"
+    if [ -d "$(linstore_directory)/apps/$app_name" ]; then
+        echo "$(linstore_directory)/apps/$app_name"
+    elif [ -d "$HOME/pi-apps/apps/$app_name" ]; then
+        echo "$HOME/pi-apps/apps/$app_name"
+    else
+        echo ""
+    fi
+}
+
+install_packages() {
+    packages="$@"
+    sudo apt update > /dev/null 2>&1
+
+    for package in $packages; do
+        if [[ "$package" == http* ]]; then
+            echo "Downloading and installing $package..."
+            wget --no-check-certificate "$package" -O /tmp/package.deb > /dev/null 2>&1
+            sudo dpkg -i /tmp/package.deb > /dev/null 2>&1
+            rm -r /tmp/package.deb
+        elif [[ "$package" == *.deb ]]; then
+            echo "Installing $package using dpkg..."
+            sudo dpkg -i "$package" > /dev/null 2>&1
+        else
+            echo "Installing $package using apt..."
+            sudo apt install "$package" -y > /dev/null 2>&1
+        fi
+    done
+}
+
+# Stub for old package scripts
+install_package(){
+    install_packages "$@"
+}
+
+remove_package(){
+    echo "Removing $1..."
+    sudo apt remove "$1" -y > /dev/null 2>&1
+}
+
+git_clone() {
+    if [ -z "$2" ]; then
+        local directory=$(basename "$1")
+    else
+        local directory="$2"
+    fi
+
+    git clone "$1" "$directory"
+}
+
 update() {
     pkill -f "yad*"
-    ./api info "Updating LinStore..."
+    "$(api_script)" info "Updating LinStore..."
     curl -s -L https://raw.githubusercontent.com/techguy16/LinStore/main/install | bash
 }
 
 buildinfo() {
-    echo "Update/commit $(git rev-parse --short HEAD) (\"$(git log --pretty='format:%Creset%s' --no-merges -1)\" - $(git log -1 --pretty=format:%an))"
+    echo "Update/commit $(git rev-parse --short HEAD 2>/dev/null) (\"$(git log --pretty='format:%Creset%s' --no-merges -1 2>/dev/null)\" - $(git log -1 --pretty=format:%an 2>/dev/null))"
 }
 
 error() {
@@ -192,15 +366,43 @@ information() {
     printf '\033[1;104;30m INFO:\033[0;104m %s \033[0m\n' "$msg" >&2
 }
 
+export -f linstore_directory
+export -f api_script
+export -f theme_get
+export -f logo
+export -f generate_command
+export -f install_app
+export -f get_installed_apps_from_piapps
+export -f open_app
+export -f installation_script
+export -f uninstall_app
+export -f search_apps
+export -f cache_categories
+export -f get_categories
+export -f get_apps_in_category
+export -f get_app_description
+export -f get_app_creator
+export -f get_app_website
+export -f get_app_directory
+export -f install_packages
+export -f install_package
+export -f remove_package
+export -f git_clone
+export -f update
+export -f buildinfo
+export -f error
+export -f warning
+export -f information
+
 # Main logic to handle command line arguments
 if [[ $1 == "search" ]]; then
     search_apps
 elif [[ $1 == "install" ]]; then
-    install_app "$2" "$3"
+    install_app "$2"
 elif [[ $1 == "whatscript" ]]; then
-    installation_script "$2" "$3"
+    installation_script "$2"
 elif [[ $1 == "uninstall" ]]; then
-    uninstall_app "$2" "$3"
+    uninstall_app "$2"
 elif [[ $1 == "logo" ]]; then
     logo
 elif [[ $1 == "error" ]]; then
