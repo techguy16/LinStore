@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source api
+
 if [[ $(xrandr --current) =~ "connected primary" ]]; then
     resolution=$(xrandr --current | grep " connected primary" | awk '{print $4}' | cut -d'+' -f1)
 else
@@ -11,8 +13,8 @@ vertical=$(echo $resolution | cut -d'x' -f2)
 
 check_for_updates() {
     #kill $(pgrep -f "title=App Details")
-    local repository_path="./apps"
-    local installed_scripts_path="$HOME/.linstore/installscripts"
+    local repository_path="$(linstore_directory)/apps"
+    local installed_scripts_path="$(linstore_directory)/installscripts"
     local updates=()
 
     mkdir -p "$installed_scripts_path"
@@ -23,15 +25,18 @@ check_for_updates() {
         sleep 1
 
         # Clean up previous installation
-        rm -rf ~/.linstore/tmp
+        rm -rf "$(linstore_directory)/tmp"
         echo "# Cloning repository"
-        git clone https://github.com/techguy16/linstore ~/.linstore/tmp > /dev/null 2>&1
+        git clone https://github.com/techguy16/linstore "$(linstore_directory)/tmp" > /dev/null 2>&1
         sleep 1
 
         echo "# Moving new app installation scripts"
-        rm -rf ./apps
-        mv ~/.linstore/tmp/apps ./apps
+        rm -rf "$(linstore_directory)/apps"
+        mv "$(linstore_directory)/tmp/apps" "$(linstore_directory)/apps"
         sleep 1
+
+        echo '# Update app cache'
+        cache_categories "apps" "$(cat "$(linstore_directory)/etc/pi-apps-import" 2> /dev/null || echo FALSE)"
 
         # Clean up
         # rm -rf ~/.linstore/tmp
@@ -43,16 +48,16 @@ check_for_updates() {
 
     local fileupdates=""
     for file in gui api createapp settings update; do
-        if diff "./$file" "$HOME/.linstore/tmp/$file" > /dev/null 2>&1; then
-            ./api info "No updates available for $file"
+        if diff "$(linstore_directory)/$file" "$(linstore_directory)/tmp/$file" > /dev/null 2>&1; then
+            "$(api_script)" info "No updates available for $file"
         else
-            ./api warning "Update available for $file"
+            "$(api_script)" warning "Update available for $file"
             fileupdates+="$file, "
         fi
     done
 
     if [ "$fileupdates" != "" ]; then
-        updates+=(TRUE "images/logo/logo-16.png" "<b>LinStore</b> ($(echo $fileupdates | sed 's/[[:space:]]*$//'  | sed 's/,$//'))")
+        updates+=(TRUE "$(linstore_directory)/images/logo/logo-16.png" "<b>LinStore</b> ($(echo $fileupdates | sed 's/[[:space:]]*$//'  | sed 's/,$//'))")
     fi
 
     for installed_script in "$installed_scripts_path"/*; do
@@ -64,7 +69,7 @@ check_for_updates() {
         fi
 
         app_directory="$repository_path/$app_name"
-        app_script=$(./api whatscript "$app_directory" "$app_name")
+        app_script=$("$(api_script)" whatscript "$app_directory" "$app_name")
         script="$app_directory/$app_script"
 
         if [ -d "$app_directory" ]; then
@@ -89,14 +94,14 @@ check_for_updates() {
     buttons_noupd=()
     pos=$(wmctrl -lG | grep "LinStore$" | awk '{print $3,$4}')
     if xdotool search --name "^LinStore$" >/dev/null 2>&1; then
-    	./api info "Running with LinStore GUI open"
+    	"$(api_script)" info "Running with LinStore GUI open"
         buttons+=("--button=Recheck Updates!edit-find:2")
     	buttons+=("--button=<b>Update Selected</b>:0")
         buttons_noupd+=("--button=Recheck Updates!edit-find:2")
         buttons_noupd+=("--button=Finish!go-next:3")
     	x2=$((horizontal / 2 - 65))
     else
-    	./api info "Running without LinStore open"
+    	"$(api_script)" info "Running without LinStore open"
     	buttons+=("--button=Return to LinStore!edit-undo:1")
         buttons+=("--button=Recheck Updates!edit-find:2")
         buttons+=("--button=<b>Update Selected</b>!view-refresh:0")
@@ -126,11 +131,12 @@ check_for_updates() {
                 app_name=$(echo "$selected" | cut -d '|' -f 3 | sed 's/<\/\?b>//g')
                 echo "Updating selected: $app_name"
                 if [[ "$(echo $app_name | awk -F" " '{print $1}')" == "LinStore" ]]; then
-                        bash -c "x-terminal-emulator -e './api update'"
+                        
+                        bash -c "$(generate_command "./api update")"
                 else
-                    ./api info "Updating app: $app_name"
+                    "$(api_script)" info "Updating app: $app_name"
                     app_directory="$repository_path/$app_name"
-                    install=$(./api install "$app_directory" "$app_name")
+                    install=$("$(api_script)" install "$app_directory" "$app_name")
                     bash -c "${install}"
                 fi
             fi

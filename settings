@@ -1,16 +1,18 @@
 #!/bin/bash
 
-APP_STORE_DIRECTORY="apps"
-CATEGORIES_FILE="etc/categories"
+source api
+
+APP_STORE_DIRECTORY="$(linstore_directory)/apps"
+CATEGORIES_FILE="$(linstore_directory)/etc/categories"
 THEMES_DIRECTORY="/usr/share/themes"
-THEMES_FILE="etc/theme"
+THEMES_FILE="$(linstore_directory)/etc/theme"
 
 show_settings() {
     pkill -f "yad.*"
     
-    selectedtheme=$(cat "etc/theme" 2>/dev/null)
-    if [[ ! -f "etc/theme" ]]; then
-        ./api error "etc/theme does not exist"
+    selectedtheme=$(cat "$(linstore_directory)/etc/theme" 2>/dev/null)
+    if [[ ! -f "$(linstore_directory)/etc/theme" ]]; then
+        "$(api_script)" error "$(linstore_directory)/etc/theme does not exist"
     fi
     #echo "$selectedtheme"
     if [[ -z "$selectedtheme" || "$selectedtheme" == " " ]]; then
@@ -32,10 +34,10 @@ show_settings() {
         theme_string+="$theme"
     done
     
-    selectededitor=$(cat "etc/editor" 2>/dev/null | sed -r 's/ \(currently selected\)//g')
+    selectededitor=$(cat "$(linstore_directory)/etc/editor" 2>/dev/null | sed -r 's/ \(currently selected\)//g')
     #echo "$selectededitor"
-    if [[ ! -f "./etc/editor" ]]; then
-        ./api error "etc/editor does not exist"
+    if [[ ! -f "$(linstore_directory)/etc/editor" ]]; then
+        "$(api_script)" error "$(linstore_directory)/etc/editor does not exist"
     fi
     if [[ -z "$selectededitor" || "$selectededitor" == " " ]]; then
         texteditors="System Default"
@@ -45,8 +47,8 @@ show_settings() {
     texteditors+="!Visual Studio Code!Geany!Gedit!Mousepad!VSCodium"
 
     accents=""
-    if [ -e "etc/accent" ]; then
-        ACCENT=$(cat etc/accent)
+    if [ -e "$(linstore_directory)/etc/accent" ]; then
+        ACCENT=$(cat "$(linstore_directory)/etc/accent")
         if [[ "$ACCENT" == "" ]]; then
             accents+="Default!"
         else
@@ -58,9 +60,9 @@ show_settings() {
     fi
     accents+="red!orangered!orange!yellow!limegreen!green!teal!lightblue!blue!purple!pink!grey"
     
-    import_piapps_file=$(cat "etc/pi-apps-import" 2>/dev/null)
-    if [[ ! -f "./etc/pi-apps-import" ]]; then
-        ./api error "etc/pi-apps-import does not exist"
+    import_piapps_file=$(cat "$(linstore_directory)/etc/pi-apps-import" 2>/dev/null)
+    if [[ ! -f "$(linstore_directory)/etc/pi-apps-import" ]]; then
+        "$(api_script)" error "$(linstore_directory)/etc/pi-apps-import does not exist"
     fi
     #echo "$selectededitor"
     if [[ -z "$import_piapps_file" || "$import_piapps_file" == " " ]]; then
@@ -69,9 +71,9 @@ show_settings() {
         import_piapps="${import_piapps_file}"
     fi
 
-    express_updates_file=$(cat "etc/express-updates" 2>/dev/null)
-    if [[ ! -f "./etc/express-updates" ]]; then
-        ./api error "etc/express-updates does not exist"
+    express_updates_file=$(cat "$(linstore_directory)/etc/express-updates" 2>/dev/null)
+    if [[ ! -f "$(linstore_directory)/etc/express-updates" ]]; then
+        "$(api_script)" error "$(linstore_directory)/etc/express-updates does not exist"
     fi
     #echo "$selectededitor"
     if [[ -z "$express_updates_file" || "$express_updates_file" == " " ]]; then
@@ -111,13 +113,13 @@ show_settings() {
         echo "$selected_text_editor"
         # Echoing to the 'etc/editor' file based on the selected text editor
         case "$selected_text_editor" in
-            "System Default") echo "xdg-open" >"etc/editor" ;;
-            "Visual Studio Code") echo "code" >"etc/editor" ;;
-            "Geany") echo "geany" >"etc/editor" ;;
-            "Gedit") echo "gedit" >"etc/editor" ;;
-            "Mousepad") echo "mousepad" >"etc/editor" ;;
-            "VSCodium") echo "codium" >"etc/editor" ;;
-            *) echo "$selected_text_editor" >"etc/editor" ;;
+            "System Default") echo "xdg-open" >"$(linstore_directory)/etc/editor" ;;
+            "Visual Studio Code") echo "code" >"$(linstore_directory)/etc/editor" ;;
+            "Geany") echo "geany" >"$(linstore_directory)/etc/editor" ;;
+            "Gedit") echo "gedit" >"$(linstore_directory)/etc/editor" ;;
+            "Mousepad") echo "mousepad" >"$(linstore_directory)/etc/editor" ;;
+            "VSCodium") echo "codium" >"$(linstore_directory)/etc/editor" ;;
+            *) echo "$selected_text_editor" >"$(linstore_directory)/etc/editor" ;;
         esac
 
         selected_theme=$(echo "$fixed_settings" | awk -F '|' '{print $2}')
@@ -133,15 +135,16 @@ show_settings() {
 
         accent_colour=$(echo "$fixed_settings" | awk -F '|' '{print $4}' | sed -r 's/ \(currently selected\)//g')
         case "$accent_colour" in
-            "Default") echo "green" >"etc/accent" ;;
-            *) echo "$accent_colour" >"etc/accent" ;;
+            "Default") echo "green" >"$(linstore_directory)/etc/accent" ;;
+            *) echo "$accent_colour" >"$(linstore_directory)/etc/accent" ;;
         esac
 
         import_from_piapps=$(echo "$fixed_settings" | awk -F '|' '{print $5}')
-        echo $import_from_piapps > "etc/pi-apps-import"
+        echo $import_from_piapps > "$(linstore_directory)/etc/pi-apps-import"
+        cache_categories "apps" "$(cat "$(linstore_directory)/etc/pi-apps-import" 2> /dev/null || echo FALSE)"
 
         express_updates=$(echo "$fixed_settings" | awk -F '|' '{print $6}')
-        echo $express_updates > "etc/express-updates"
+        echo $express_updates > "$(linstore_directory)/etc/express-updates"
         
         ./gui
     elif [[ $yad_ret -eq 252 ]]; then

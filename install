@@ -38,20 +38,44 @@ information() {
     echo -e "\033[1;104m\033[30m INFO:\033[0;104m $1 \033[0m" 1>&2
 }
 
-if ! command -v git &>/dev/null; then
-    echo "Git is not installed. Please install Git and rerun the installation."
-    missing_dependencies=true
-fi
+missing_dependencies=false
 
-if ! command -v yad wmctrl convert xdotool &>/dev/null; then
+dependencies=(yad wmctrl convert xdotool git wget)
+
+for dependency in "${dependencies[@]}"; do
+    if ! command -v "$dependency" >/dev/null 2>&1; then
+        missing_dependencies=true
+        break
+    fi
+done
+
+if [[ "$missing_dependencies" == true ]]; then
     warning "Various dependencies required for LinStore are not installed."
     information "Installing dependencies..."
     sudo apt update > /dev/null 2>&1
-    if sudo apt install yad wmctrl imagemagick xdotool -y > /dev/null 2>&1; then
+    if sudo apt install yad wmctrl imagemagick xdotool git wget -y > /dev/null 2>&1; then
         missing_dependencies=false
     else
         error "Cannot continue, exiting."
         missing_dependencies=true
+    fi
+fi
+
+# Ubuntu 26+ requires yad to be downgraded for LinStore to display properly
+if [[ "$(cat /etc/os-release | grep VERSION_ID | tr -d 'VERSION_ID="' | awk -F'.' '{print $1}')" -ge 26 ]]; then
+    information "Downgrading yad to supported version..."
+    if [[ "$(uname -m)" == "x86_64" ]]; then
+        package_url="http://archive.ubuntu.com/ubuntu/pool/universe/y/yad/yad_0.40.0-1build3_amd64.deb"
+    elif [[ "$(uname -m)" == "aarch64" ]]; then
+        package_url="https://ports.ubuntu.com/pool/universe/y/yad/yad_0.40.0-1build3_arm64.deb"
+    else
+        warning "Unsupported architecture for downgrade. LinStore may break."
+    fi
+
+    if [[ -n "$package_url" ]]; then
+        wget --no-check-certificate "$package_url" -O /tmp/package.deb > /dev/null 2>&1
+        sudo dpkg -i /tmp/package.deb > /dev/null 2>&1
+        rm -r /tmp/package.deb
     fi
 fi
 
@@ -93,16 +117,18 @@ cp -r "$temp_dir"/* "$install_dir"
 cd "$install_dir"
 chmod +x *
 chmod +x "gui"
+echo "$HOME/.linstore" > "$HOME/.linstore/directory"
 rm -rf "$temp_dir"  # Clean up temporary directory
 
 # Create a bin directory if it doesn't exist
 
-if [ ! -e /usr/local/bin/install_package ]; then
-    sudo mkdir -p /usr/local/bin
+# LinStore no longer uses system-wide scripts
+# if [ ! -e /usr/local/bin/install_package ]; then
+#    sudo mkdir -p /usr/local/bin
     # Copy files to /usr/local/bin
-    information "Copying executable files to /usr/local/bin..."
-    sudo cp "$install_dir"/etc/tools/*_package /usr/local/bin/
-fi
+#    information "Copying executable files to /usr/local/bin..."
+#    sudo cp "$install_dir"/etc/tools/*_package /usr/local/bin/
+# fi
 
 # Create a desktop shortcut for GUI
 information "Creating shortcuts..."
